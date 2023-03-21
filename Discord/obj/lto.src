@@ -10,11 +10,22 @@ _main:
 	call	_os_HomeUp
 	call	_os_DrawStatusBar
 	call	_gfx_Begin
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, 132
+	push	hl
+	ld	hl, _global_palette
+	push	hl
+	call	_gfx_SetPalette
+	pop	hl
+	pop	hl
+	pop	hl
 	ld	hl, 6
 	push	hl
 	call	_gfx_SetTextFGColor
 	pop	hl
-	ld	hl, 74
+	ld	hl, 5
 	push	hl
 	call	_gfx_SetTextBGColor
 	pop	hl
@@ -38,7 +49,7 @@ _main:
 	push	hl
 	call	_gfx_SetDraw
 	pop	hl
-	ld	hl, 74
+	ld	hl, 5
 	push	hl
 	call	_gfx_FillScreen
 	pop	hl
@@ -71,8 +82,32 @@ BB0_1:
 	inc	bc
 	jr	BB0_1
 BB0_3:
-	ld	hl, 50
+	ld	hl, 2
 	push	hl
+	ld	hl, 500
+	push	hl
+	ld	hl, 215
+	push	hl
+	ld	hl, 51
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 80
+	push	hl
+	ld	hl, 70
+	push	hl
+	ld	hl, _pfp_data
+	push	hl
+	call	_gfx_Sprite
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 5
+	push	hl
+	ld	hl, 10
 	push	hl
 	ld	hl, _pfp_data
 	push	hl
@@ -87,6 +122,35 @@ BB0_3:
 	ld	hl, _.str
 	push	hl
 	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 4
+	push	hl
+	ld	hl, 250
+	push	hl
+	ld	hl, 10
+	push	hl
+	ld	hl, _.str.2
+	push	hl
+	ld	hl, _.str.1
+	push	hl
+	call	_optix_Message
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 15
+	push	hl
+	ld	hl, 500
+	push	hl
+	ld	hl, 10
+	push	hl
+	ld	hl, _.str.3
+	push	hl
+	call	_optix_GetStringInput
+	pop	hl
 	pop	hl
 	pop	hl
 	pop	hl
@@ -106,42 +170,6140 @@ BB0_4:
 	ret
 	section	.text,"ax",@progbits
 
+	section	.text,"ax",@progbits
+	public	_optix_HandleGUI
+_optix_HandleGUI:
+	call	_kb_Scan
+	call	_os_GetCSC
+	ld	(_optix_guidata+3), a
+	call	_kb_AnyKey
+	or	a, a
+	jr	nz, BB1_2
+	ld	a, 1
+	ld	(_optix_guidata+2), a
+BB1_2:
+	ld	a, (_optix_guicolors)
+	ld	l, a
+	push	hl
+	call	_gfx_FillScreen
+	pop	hl
+	call	_optix_RenderButtons
+	call	_optix_HandleCursor
+	jp	_optix_CheckForAltKey
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_RenderButtons
+_optix_RenderButtons:
+	ld	hl, -21
+	call	__frameset
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_optix_CusText
+	ld	de, 0
+	ld	iy, 0
+	pop	hl
+	lea	hl, iy
+BB2_1:
+	ld	a, (_optix_buttoninfo)
+	ld	e, a
+	ld	(ix - 6), hl
+	or	a, a
+	sbc	hl, de
+	jp	nc, BB2_8
+	ld	(ix - 9), iy
+	ld	hl, (_optix_button)
+	ld	(ix - 3), hl
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	a, (_optix_buttoninfo+1)
+	ld	de, 0
+	ld	e, a
+	ld	hl, (ix - 6)
+	or	a, a
+	sbc	hl, de
+	jp	nz, BB2_7
+	ld	de, (ix - 9)
+	push	de
+	pop	bc
+	ld	iy, (ix - 3)
+	add	iy, bc
+	ld	hl, (iy + 21)
+	ld	(ix - 18), iy
+	ld	iy, (iy)
+	ld	bc, 0
+	ld	c, iyl
+	ld	b, iyh
+	ld	(ix - 12), bc
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB2_5
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	bc, 0
+	push	bc
+	pop	hl
+	ld	l, (iy + 2)
+	ld	de, (iy + 3)
+	ld	c, e
+	ld	b, d
+	ld	de, 0
+	ld	e, (iy + 5)
+	push	de
+	push	bc
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	jr	BB2_6
+BB2_5:
+	ld	bc, -2
+	ld	hl, (ix - 12)
+	add	hl, bc
+	ld	(ix - 12), hl
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	(ix - 15), iy
+	or	a, a
+	sbc	hl, hl
+	ld	l, (iy + 2)
+	add	hl, bc
+	ld	(ix - 21), hl
+	ld	de, (iy + 3)
+	ld	iy, 0
+	ld	iyl, e
+	ld	iyh, d
+	ld	hl, 4
+	ex	de, hl
+	add	iy, de
+	lea	de, iy
+	or	a, a
+	sbc	hl, hl
+	ld	iy, (ix - 15)
+	ld	l, (iy + 5)
+	ld	bc, 4
+	add	hl, bc
+	push	hl
+	push	de
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	iy, (ix - 18)
+	ld	hl, (iy + 21)
+	ld	iy, (ix - 15)
+	ld	de, (iy)
+	ld	bc, 0
+	ld	c, e
+	ld	b, d
+	ld	de, 0
+	ld	e, (iy + 2)
+	push	de
+	push	bc
+	push	hl
+	call	_gfx_TransparentSprite
+BB2_6:
+	pop	hl
+	pop	hl
+	pop	hl
+BB2_7:
+	ld	de, (ix - 9)
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	(ix - 3), iy
+	lea	hl, iy + 6
+	ld	(ix - 12), hl
+	ld	hl, (iy)
+	ld	de, 0
+	ld	e, l
+	ld	d, h
+	ld	hl, (iy + 3)
+	ld	a, 1
+	ld	c, a
+	call	__sshru
+	ld	bc, 0
+	push	bc
+	pop	iy
+	ex	de, hl
+	ld	iyl, e
+	ld	iyh, d
+	ex	de, hl
+	add	iy, de
+	ld	(ix - 15), iy
+	ld	hl, (ix - 12)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, (ix - 15)
+	or	a, a
+	sbc	hl, de
+	ld	(ix - 15), hl
+	ld	de, 0
+	push	de
+	pop	hl
+	ld	iy, (ix - 3)
+	ld	l, (iy + 2)
+	ld	iy, (ix - 3)
+	ld	e, (iy + 5)
+	srl	e
+	push	de
+	pop	bc
+	ld	de, -4
+	add	hl, de
+	add	hl, bc
+	push	hl
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	call	_gfx_PrintStringXY
+	ld	iy, (ix - 9)
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 6)
+	inc	hl
+	ld	de, 28
+	add	iy, de
+	ld	bc, 0
+	push	bc
+	pop	de
+	jp	BB2_1
+BB2_8:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_HandleCursor
+_optix_HandleCursor:
+	call	_optix_HandleTrackPad
+	ld	a, (_optix_cursor+3)
+	bit	0, a
+	jr	nz, BB3_2
+	call	_optix_UpdateSelectedButton
+	call	_optix_ClickButton
+	ret
+BB3_2:
+	call	_optix_UpdateCursor
+	call	_optix_ClickCursor
+	call	_optix_RenderCursor
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_CheckForAltKey
+_optix_CheckForAltKey:
+	ld	hl, -9
+	call	__frameset
+	ld	bc, 0
+	ld	a, (_optix_buttoninfo)
+	push	bc
+	pop	iy
+	push	bc
+	pop	de
+BB4_1:
+	ld	c, a
+	push	de
+	pop	hl
+	or	a, a
+	sbc	hl, bc
+	jr	nc, BB4_7
+	ld	(ix - 6), a
+	ld	hl, (_optix_button)
+	ld	(ix - 3), iy
+	lea	bc, iy
+	ld	(ix - 9), hl
+	push	hl
+	pop	iy
+	add	iy, bc
+	ld	l, (iy + 27)
+	ld	a, (_optix_guidata+3)
+	ld	c, a
+	ld	a, l
+	or	a, a
+	jr	nz, BB4_4
+	ld	iy, (ix - 3)
+	ld	a, (ix - 6)
+	jr	BB4_6
+BB4_4:
+	ld	a, l
+	cp	a, c
+	ld	iy, (ix - 3)
+	ld	a, (ix - 6)
+	jr	nz, BB4_6
+	ld	(ix - 6), de
+	lea	de, iy
+	ld	iy, (ix - 9)
+	add	iy, de
+	ld	hl, (iy + 24)
+	call	__indcallhl
+	ld	de, (ix - 6)
+	ld	iy, (ix - 3)
+	ld	a, (_optix_buttoninfo)
+BB4_6:
+	inc	de
+	ld	bc, 28
+	add	iy, bc
+	ld	bc, 0
+	jr	BB4_1
+BB4_7:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_HandleTrackPad
+_optix_HandleTrackPad:
+	ld	hl, -13
+	call	__frameset
+	ld	hl, -720876
+	ld	iyh, 0
+	ld.sis	bc, 255
+	ld	iyl, -68
+	ld	a, -102
+	ld	(ix - 11), a
+	ld	a, 120
+	ld	(ix - 10), a
+	ld	a, 85
+	ld	(ix - 9), a
+	ld	a, 51
+	ld	(ix - 13), a
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	ld	a, e
+	or	a, a
+	push	af
+	ld	a, iyl
+	ld	(ix - 12), a
+	pop	af
+	jr	nz, BB5_2
+	ld.sis	bc, 0
+	ld	e, iyh
+	ld	(ix - 3), de
+	jp	BB5_15
+BB5_2:
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	call	__sand
+	ld	a, l
+	cp	a, 2
+	jr	z, BB5_4
+	ld	iyl, iyh
+BB5_4:
+	ld	a, l
+	cp	a, 4
+	ld	d, -102
+	jr	z, BB5_6
+	ld	d, iyl
+BB5_6:
+	ld	a, l
+	cp	a, 8
+	ld	e, 120
+	jr	z, BB5_8
+	ld	e, d
+BB5_8:
+	ld	a, l
+	cp	a, 16
+	ld	d, 85
+	jr	z, BB5_10
+	ld	d, e
+BB5_10:
+	ld	a, l
+	cp	a, 32
+	ld	iyl, 51
+	jr	z, BB5_12
+	ld	iyl, d
+BB5_12:
+	ld	a, l
+	cp	a, 64
+	ld	l, 17
+	jr	z, BB5_14
+	ex	de, hl
+	ld	e, iyl
+	ex	de, hl
+BB5_14:
+	ld	(ix - 3), hl
+	ld.sis	bc, 32
+BB5_15:
+	ld	iyl, -34
+	ld	hl, -720874
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	ld	a, e
+	or	a, a
+	jp	z, BB5_31
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 255
+	call	__sand
+	ld	a, l
+	cp	a, 1
+	jr	z, BB5_18
+	ld	de, (ix - 3)
+	ld	iyl, e
+BB5_18:
+	ld	a, l
+	cp	a, 2
+	ld	e, -68
+	jr	z, BB5_20
+	ld	e, iyl
+BB5_20:
+	ld	a, l
+	cp	a, 4
+	ld	d, -102
+	jr	z, BB5_22
+	ld	d, e
+BB5_22:
+	ld	a, l
+	cp	a, 8
+	ld	e, 120
+	jr	z, BB5_24
+	ld	e, d
+BB5_24:
+	ld	a, l
+	cp	a, 16
+	ld	d, 85
+	jr	z, BB5_26
+	ld	d, e
+BB5_26:
+	ld	a, l
+	cp	a, 32
+	ld	iyl, 51
+	jr	z, BB5_28
+	ld	iyl, d
+BB5_28:
+	ld	a, l
+	cp	a, 64
+	ld	l, 17
+	jr	z, BB5_30
+	ex	de, hl
+	ld	e, iyl
+	ex	de, hl
+BB5_30:
+	ld	(ix - 3), hl
+	ld.sis	bc, 96
+	ld	iyl, -34
+BB5_31:
+	ld	hl, -720872
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	ld	a, e
+	or	a, a
+	jp	z, BB5_47
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 255
+	call	__sand
+	ld	a, l
+	cp	a, 1
+	ld	de, (ix - 3)
+	jr	z, BB5_34
+	ld	iyl, e
+BB5_34:
+	ld	a, l
+	cp	a, 2
+	ld	e, -68
+	jr	z, BB5_36
+	ld	e, iyl
+BB5_36:
+	ld	a, l
+	cp	a, 4
+	ld	d, -102
+	jr	z, BB5_38
+	ld	d, e
+BB5_38:
+	ld	a, l
+	cp	a, 8
+	ld	e, 120
+	jr	z, BB5_40
+	ld	e, d
+BB5_40:
+	ld	a, l
+	cp	a, 16
+	ld	d, 85
+	jr	z, BB5_42
+	ld	d, e
+BB5_42:
+	ld	a, l
+	cp	a, 32
+	ld	iyl, 51
+	jr	z, BB5_44
+	ld	iyl, d
+BB5_44:
+	ld	a, l
+	cp	a, 64
+	ld	l, 17
+	jr	z, BB5_46
+	ex	de, hl
+	ld	e, iyl
+	ex	de, hl
+BB5_46:
+	ld	(ix - 3), hl
+	ld.sis	bc, 160
+	ld	iyl, -34
+BB5_47:
+	ld	hl, -720870
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	ld	a, e
+	or	a, a
+	jp	z, BB5_63
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 255
+	call	__sand
+	ld	a, l
+	cp	a, 1
+	ld	e, -68
+	jp	z, BB5_50
+	ld	iy, (ix - 3)
+BB5_50:
+	ld	a, l
+	cp	a, 2
+	jr	z, BB5_52
+	ld	e, iyl
+BB5_52:
+	ld	a, l
+	cp	a, 4
+	ld	d, -102
+	jr	z, BB5_54
+	ld	d, e
+BB5_54:
+	ld	a, l
+	cp	a, 8
+	ld	e, 120
+	jr	z, BB5_56
+	ld	e, d
+BB5_56:
+	ld	a, l
+	cp	a, 16
+	ld	d, 85
+	jr	z, BB5_58
+	ld	d, e
+BB5_58:
+	ld	a, l
+	cp	a, 32
+	ld	iyl, 51
+	jr	z, BB5_60
+	ld	iyl, d
+BB5_60:
+	ld	a, l
+	cp	a, 64
+	ld	l, 17
+	jr	z, BB5_62
+	ex	de, hl
+	ld	e, iyl
+	ex	de, hl
+BB5_62:
+	ld	(ix - 3), hl
+	ld.sis	bc, 224
+	ld	iyl, -34
+BB5_63:
+	ld	hl, -720868
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	dec	hl
+	ld	a, e
+	or	a, a
+	jr	nz, BB5_66
+	or	a, a
+	sbc	hl, hl
+	push	bc
+	pop	iy
+	ld	a, c
+	or	a, a
+	ld	de, (ix - 3)
+	jp	z, BB5_82
+	ex	de, hl
+	ld	e, iyl
+	ld	d, iyh
+	ex	de, hl
+	jr	BB5_81
+BB5_66:
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 255
+	call	__sand
+	ld	c, l
+	ld	b, h
+	ld	a, c
+	cp	a, 1
+	ld	hl, (ix - 3)
+	jr	z, BB5_68
+	ex	de, hl
+	ld	iyl, e
+	ex	de, hl
+BB5_68:
+	ld	a, c
+	cp	a, 2
+	ld	l, 17
+	ld	(ix - 6), hl
+	jr	z, BB5_70
+	push	af
+	ld	a, iyl
+	ld	(ix - 12), a
+	pop	af
+BB5_70:
+	ld	a, c
+	cp	a, 4
+	jr	z, BB5_72
+	ld	a, (ix - 12)
+	ld	(ix - 11), a
+BB5_72:
+	ld	a, c
+	cp	a, 8
+	jr	z, BB5_74
+	ld	a, (ix - 11)
+	ld	(ix - 10), a
+BB5_74:
+	ld	a, c
+	cp	a, 16
+	jr	z, BB5_76
+	ld	a, (ix - 10)
+	ld	(ix - 9), a
+BB5_76:
+	ld	a, c
+	cp	a, 32
+	jr	z, BB5_78
+	ld	a, (ix - 9)
+	ld	(ix - 13), a
+BB5_78:
+	ld	hl, 288
+	ld	(ix - 9), hl
+	ld	a, c
+	cp	a, 64
+	jr	nz, BB5_80
+	ld.sis	bc, 17
+	ld	(ix - 3), bc
+	jp	BB5_84
+BB5_80:
+	push	hl
+	pop	iy
+	ld	e, (ix - 13)
+	ld	hl, 288
+BB5_81:
+	ld	d, 0
+	ld	a, e
+	or	a, a
+	jr	nz, BB5_83
+BB5_82:
+	ld	a, (_optix_guidata+11)
+	inc	a
+	jp	BB5_88
+BB5_83:
+	ld	(ix - 9), hl
+	ld	(ix - 3), de
+	ld	(ix - 6), de
+	lea	hl, iy
+BB5_84:
+	ld	de, _optix_guidata+8
+	ld	iy, _optix_cursor
+	ld	bc, 3
+	ld	a, (_optix_guidata+11)
+	cp	a, c
+	jr	c, BB5_86
+	ld	iy, (iy)
+	push	hl
+	pop	bc
+	ex	de, hl
+	push	de
+	ld	e, iyl
+	ld	d, iyh
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	pop	de
+	ld	a, (_optix_cursor+2)
+	ld	(ix - 10), a
+	ld	(_optix_guidata+10), a
+	push	bc
+	pop	de
+	ld	hl, _optix_guidata+5
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	ex	de, hl
+	ld	de, (ix - 6)
+	ld	a, e
+	ld	(_optix_guidata+7), a
+	ld	bc, 3
+	jr	BB5_87
+BB5_86:
+	ex	de, hl
+	ld	iy, (hl)
+	ld	hl, _optix_guidata+5
+	ld	hl, (hl)
+	ld	a, (_optix_guidata+10)
+	ld	(ix - 10), a
+	ld	a, (_optix_guidata+7)
+	ld	e, a
+	ld	(ix - 6), de
+BB5_87:
+	ld	de, 0
+	ld	e, l
+	ld	d, h
+	ld	hl, (ix - 9)
+	or	a, a
+	sbc	hl, de
+	call	__idivs
+	push	hl
+	pop	de
+	add.sis	iy, de
+	ld	hl, _optix_cursor
+	push	de
+	ld	e, iyl
+	ld	d, iyh
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	pop	de
+	ld	de, (ix - 6)
+	ld	d, 0
+	ld	hl, (ix - 3)
+	or	a, a
+	sbc.sis	hl, de
+	ld.sis	bc, 3
+	call	__sdivs
+	ld	a, (ix - 10)
+	add	a, l
+	ld	(_optix_cursor+2), a
+	xor	a, a
+BB5_88:
+	ld	(_optix_guidata+11), a
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_UpdateCursor
+_optix_UpdateCursor:
+	call	_kb_Scan
+	ld	iy, -720866
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	a, l
+	bit	1, a
+	jr	z, BB6_3
+	ld	hl, _optix_cursor
+	ld	hl, (hl)
+	add.sis	hl, bc
+	or	a, a
+	sbc.sis	hl, bc
+	jr	z, BB6_3
+	ld.sis	de, -2
+	add.sis	hl, de
+	lea	de, iy
+	ld	iy, _optix_cursor
+	ld	(iy), l
+	ld	(iy + 1), h
+	push	de
+	pop	iy
+BB6_3:
+	lea	bc, iy
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	a, l
+	bit	2, a
+	jr	z, BB6_6
+	ld	hl, _optix_cursor
+	ld	iy, (hl)
+	ld.sis	de, 320
+	ex	de, hl
+	ld	e, iyl
+	ld	d, iyh
+	ex	de, hl
+	or	a, a
+	sbc.sis	hl, de
+	jr	nc, BB6_6
+	ld.sis	de, 2
+	add.sis	iy, de
+	ld	hl, _optix_cursor
+	push	de
+	ld	e, iyl
+	ld	d, iyh
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	pop	de
+BB6_6:
+	ld.sis	de, 1
+	push	bc
+	pop	iy
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	a, l
+	bit	3, a
+	jr	z, BB6_9
+	ld	a, (_optix_cursor+2)
+	ld	l, a
+	or	a, a
+	jr	z, BB6_9
+	ld	a, l
+	add	a, -2
+	ld	(_optix_cursor+2), a
+BB6_9:
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	c, e
+	ld	b, d
+	call	__sand
+	bit	0, l
+	ld	iy, _optix_cursor
+	jr	z, BB6_12
+	ld	a, (_optix_cursor+2)
+	cp	a, -16
+	jr	nc, BB6_12
+	add	a, 2
+	ld	(_optix_cursor+2), a
+BB6_12:
+	ld	hl, (iy)
+	ld.sis	de, 321
+	or	a, a
+	sbc.sis	hl, de
+	jr	c, BB6_14
+	ld.sis	hl, 320
+	ld	(iy), l
+	ld	(iy + 1), h
+BB6_14:
+	ld	a, (_optix_cursor+2)
+	cp	a, -15
+	jr	c, BB6_16
+	ld	a, -16
+	ld	(_optix_cursor+2), a
+BB6_16:
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_ClickCursor
+_optix_ClickCursor:
+	ld	hl, -18
+	call	__frameset
+	ld	hl, -720868
+	ld.sis	bc, 1
+	ld	de, _optix_cursor
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	call	__sand
+	ld	(ix - 3), hl
+	ld	a, (_optix_guidata+2)
+	ld	iyh, a
+	ld	a, (_optix_buttoninfo)
+	ld	iyl, a
+	ld	hl, (_optix_button)
+	ld	(ix - 6), hl
+	ex	de, hl
+	ld	hl, (hl)
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	e, l
+	ld	d, h
+	ld	(ix - 9), de
+	ld	a, (_optix_cursor+2)
+	ld	c, a
+	ld	(ix - 12), bc
+	ld	hl, (ix - 3)
+	bit	0, l
+	jr	z, BB7_2
+	ld	a, iyh
+	or	a, a
+	jp	nz, BB7_9
+BB7_2:
+	or	a, a
+	sbc	hl, hl
+	ex	de, hl
+	ld	e, iyl
+	ex	de, hl
+	inc	iyl
+	ld	a, iyl
+	ld	iy, (ix - 6)
+	lea	iy, iy + 2
+	ld	b, h
+	ld	e, b
+BB7_3:
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jp	z, BB7_19
+	ld	(ix - 6), e
+	ld	(ix - 15), hl
+	ld	hl, (iy - 2)
+	ld	(ix - 3), iy
+	ld	iy, 0
+	lea	de, iy
+	ld	e, l
+	ld	d, h
+	ld	hl, (ix - 9)
+	or	a, a
+	sbc	hl, de
+	push	hl
+	pop	bc
+	ld	iy, (ix - 3)
+	ld	hl, (iy + 1)
+	ld	de, 0
+	ld	e, l
+	ld	d, h
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_8
+	ld	de, 0
+	ld	(ix - 18), bc
+	ld	iy, (ix - 3)
+	ld	e, (iy)
+	ld	hl, (ix - 12)
+	or	a, a
+	sbc	hl, de
+	push	hl
+	pop	bc
+	ld	e, (iy + 3)
+	ld	iyl, e
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	m, BB7_8
+	ld	de, 0
+	ld	e, iyl
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_8
+	ld	hl, (ix - 18)
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_16
+BB7_8:
+	ld	(_optix_buttoninfo+1), a
+	ld	e, (ix - 6)
+	inc	e
+	ld	iy, (ix - 3)
+	lea	iy, iy + 28
+	ld	hl, (ix - 15)
+	dec	hl
+	jp	BB7_3
+BB7_9:
+	ld	bc, 0
+	push	bc
+	pop	hl
+	ex	de, hl
+	ld	e, iyl
+	ex	de, hl
+	xor	a, a
+	ld	iy, (ix - 6)
+BB7_10:
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jp	z, BB7_18
+	ld	(ix - 6), hl
+	ld	hl, (iy)
+	push	bc
+	pop	de
+	ld	e, l
+	ld	d, h
+	ld	hl, (ix - 9)
+	or	a, a
+	sbc	hl, de
+	ld	(ix - 3), hl
+	ld	hl, (iy + 3)
+	push	bc
+	pop	de
+	ld	bc, (ix - 3)
+	ld	e, l
+	ld	d, h
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_15
+	ld	de, 0
+	ld	e, (iy + 2)
+	ld	hl, (ix - 12)
+	or	a, a
+	sbc	hl, de
+	ld	a, (iy + 5)
+	ld	(ix - 15), hl
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	m, BB7_15
+	ld	de, 0
+	ld	e, a
+	ld	hl, (ix - 15)
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_15
+	push	bc
+	pop	hl
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB7_17
+BB7_15:
+	lea	iy, iy + 28
+	ld	hl, (ix - 6)
+	dec	hl
+	xor	a, a
+	ld	bc, 0
+	jp	BB7_10
+BB7_16:
+	ld	a, (ix - 6)
+	ld	(_optix_buttoninfo+1), a
+	jr	BB7_19
+BB7_17:
+	ld	hl, (iy + 24)
+	call	__indcallhl
+	xor	a, a
+BB7_18:
+	ld	(_optix_guidata+2), a
+BB7_19:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_RenderCursor
+_optix_RenderCursor:
+	ld	hl, -3
+	call	__frameset
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, _optix_cursor
+	ld	hl, (hl)
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	e, l
+	ld	d, h
+	ld	a, (_optix_cursor+2)
+	ld	c, a
+	ld	(ix - 3), bc
+	ld	hl, 5
+	push	hl
+	push	bc
+	push	de
+	call	_gfx_Circle
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, _optix_cursor
+	ld	hl, (hl)
+	ld	bc, (ix - 3)
+	ld	c, l
+	ld	b, h
+	ld	a, (_optix_cursor+2)
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	ld	de, 4
+	push	de
+	push	hl
+	push	bc
+	call	_gfx_Circle
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_UpdateSelectedButton
+_optix_UpdateSelectedButton:
+	ld	hl, -29
+	call	__frameset
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 6), hl
+	ld	a, (_optix_guidata+2)
+	bit	0, a
+	jp	z, BB9_32
+	call	_kb_Scan
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	c, 14
+	call	__sshl
+	ex	de, hl
+	ld	iyl, e
+	ld	iyh, d
+	ex	de, hl
+	add.sis	iy, iy
+	sbc.sis	hl, hl
+	ld	c, l
+	ld	b, h
+	ld	a, b
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	push	hl
+	pop	de
+	ld	d, a
+	ld	e, c
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	c, 2
+	call	__sshru
+	ld.sis	bc, 1
+	call	__sand
+	ld	bc, 0
+	push	bc
+	pop	iy
+	ex	de, hl
+	ld	iyl, e
+	ld	iyh, d
+	ex	de, hl
+	add	iy, de
+	ld	(ix - 9), iy
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	c, 12
+	call	__sshl
+	ex	de, hl
+	ld	iyl, e
+	ld	iyh, d
+	ex	de, hl
+	add.sis	iy, iy
+	sbc.sis	hl, hl
+	ld	e, l
+	ld	d, h
+	ld	a, d
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	push	hl
+	pop	iy
+	ld	iyh, a
+	ld	iyl, e
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 1
+	call	__sand
+	ld	de, 0
+	ld	e, l
+	ld	d, h
+	add	iy, de
+	ld	hl, (ix - 9)
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB9_3
+	lea	hl, iy
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jp	z, BB9_32
+BB9_3:
+	ld	(ix - 22), iy
+	ld	iy, (_optix_button)
+	ld	a, (_optix_buttoninfo+1)
+	ld	de, 0
+	ld	e, a
+	ld	bc, 28
+	push	de
+	pop	hl
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	(ix - 3), iy
+	add	iy, bc
+	ld	a, (_optix_buttoninfo)
+	ld	l, a
+	ld	a, (_optix_guisettings+2)
+	ld	e, a
+	ld	(ix - 19), de
+	ld	de, 0
+	ld	e, l
+	ld	b, d
+	ld	c, b
+	ld	hl, 10000
+	ld	(ix - 12), hl
+BB9_4:
+	push	de
+	pop	hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jp	z, BB9_29
+	ld	(ix - 15), iy
+	ld	iy, (ix - 3)
+	ld	a, (iy + 27)
+	or	a, a
+	jp	nz, BB9_23
+	ld	(ix - 26), b
+	ld	(ix - 16), c
+	ld	(ix - 25), de
+	ld	bc, (ix - 9)
+	push	bc
+	pop	hl
+	ld	de, -1
+	or	a, a
+	sbc	hl, de
+	jr	nz, BB9_9
+	ld	hl, (ix - 3)
+	ld	bc, (hl)
+	ld	iy, (ix - 15)
+	ld	de, (iy)
+	ld	l, c
+	ld	h, b
+	or	a, a
+	sbc.sis	hl, de
+	jp	nc, BB9_16
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 6), de
+	push	hl
+	pop	de
+	ld	l, c
+	ld	h, b
+	push	hl
+	pop	bc
+	ex	de, hl
+	ld	de, (ix - 6)
+	ld	l, e
+	ld	h, d
+	sbc	hl, bc
+	ld	(ix - 6), hl
+	or	a, a
+	sbc	hl, hl
+	lea	de, iy
+	ld	iy, (ix - 3)
+	ld	l, (iy + 2)
+	ld	bc, 0
+	push	de
+	pop	iy
+	ld	c, (iy + 2)
+	or	a, a
+	sbc	hl, bc
+	jp	BB9_15
+BB9_9:
+	push	bc
+	pop	hl
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	jr	nz, BB9_12
+	ld	hl, (ix - 3)
+	ld	de, (hl)
+	ld	hl, (ix - 15)
+	ld	bc, (hl)
+	ld	l, c
+	ld	h, b
+	ld	(ix - 6), de
+	or	a, a
+	sbc.sis	hl, de
+	ld	de, (ix - 25)
+	jp	nc, BB9_28
+	ld	iy, 0
+	ld	iyl, c
+	ld	iyh, b
+	or	a, a
+	sbc	hl, hl
+	ld	bc, (ix - 6)
+	ld	l, c
+	ld	h, b
+	lea	bc, iy
+	sbc	hl, bc
+	ld	(ix - 6), hl
+	ld	bc, 0
+	push	bc
+	pop	hl
+	ld	iy, (ix - 3)
+	ld	l, (iy + 2)
+	ld	iy, (ix - 15)
+	ld	c, (iy + 2)
+	jp	BB9_27
+BB9_12:
+	ld	bc, (ix - 22)
+	push	bc
+	pop	hl
+	ld	de, -1
+	or	a, a
+	sbc	hl, de
+	jp	nz, BB9_24
+	ld	iy, (ix - 3)
+	ld	a, (iy + 2)
+	ld	iy, (ix - 15)
+	ld	c, (iy + 2)
+	cp	a, c
+	jr	nc, BB9_16
+	ld	de, 0
+	push	de
+	pop	hl
+	ld	l, a
+	ld	(ix - 6), hl
+	push	de
+	pop	hl
+	ld	l, c
+	ld	bc, (ix - 6)
+	or	a, a
+	sbc	hl, bc
+	ld	(ix - 6), hl
+	ld	hl, (ix - 3)
+	ld	bc, (hl)
+	push	de
+	pop	hl
+	ld	l, c
+	ld	h, b
+	ld	iy, (iy)
+	ld	e, iyl
+	ld	d, iyh
+	or	a, a
+	sbc	hl, de
+BB9_15:
+	push	hl
+	pop	de
+	push	de
+	pop	iy
+	add	iy, iy
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ex	de, hl
+	add	hl, bc
+	call	__ixor
+	ld	bc, (ix - 19)
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	iy, (ix - 6)
+	add	iy, bc
+	ld	bc, (ix - 12)
+	jr	BB9_17
+BB9_16:
+	ld	bc, (ix - 12)
+	ld	iy, 10000
+BB9_17:
+	ld	de, (ix - 25)
+BB9_18:
+	lea	hl, iy
+	or	a, a
+	sbc	hl, bc
+	call	pe, __setflag
+	ld	a, (ix - 16)
+	jp	m, BB9_20
+	ld	a, (ix - 26)
+BB9_20:
+	lea	hl, iy
+	or	a, a
+	sbc	hl, bc
+	call	pe, __setflag
+	lea	hl, iy
+	jp	m, BB9_22
+	push	bc
+	pop	hl
+BB9_22:
+	ld	(ix - 12), hl
+	ld	(ix - 6), iy
+	ld	b, a
+	ld	c, (ix - 16)
+BB9_23:
+	ld	iy, (ix - 3)
+	lea	iy, iy + 28
+	ld	(ix - 3), iy
+	inc	c
+	dec	de
+	ld	iy, (ix - 15)
+	jp	BB9_4
+BB9_24:
+	push	bc
+	pop	hl
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	ld	bc, 10000
+	ld	iy, (ix - 6)
+	ld	de, (ix - 25)
+	jr	nz, BB9_18
+	ld	iy, (ix - 3)
+	ld	c, (iy + 2)
+	ld	iy, (ix - 15)
+	ld	a, (iy + 2)
+	cp	a, c
+	jr	nc, BB9_28
+	ld	iy, 0
+	ld	iyl, a
+	or	a, a
+	sbc	hl, hl
+	ld	l, c
+	lea	bc, iy
+	sbc	hl, bc
+	ld	(ix - 6), hl
+	ld	hl, (ix - 3)
+	ld	bc, (hl)
+	ld	iy, 0
+	lea	hl, iy
+	ld	l, c
+	ld	h, b
+	ld	iy, (ix - 15)
+	ld	iy, (iy)
+	ld	bc, 0
+	ld	c, iyl
+	ld	b, iyh
+BB9_27:
+	or	a, a
+	sbc	hl, bc
+	push	hl
+	pop	iy
+	ld	(ix - 29), iy
+	add	iy, iy
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	hl, (ix - 29)
+	add	hl, bc
+	call	__ixor
+	ld	bc, (ix - 19)
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	iy, (ix - 6)
+	add	iy, bc
+	ld	bc, (ix - 12)
+	jp	BB9_18
+BB9_28:
+	ld	bc, (ix - 12)
+	ld	iy, 10000
+	jp	BB9_18
+BB9_29:
+	ld	de, 5000
+	ld	hl, (ix - 12)
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB9_31
+	ld	a, b
+	ld	(_optix_buttoninfo+1), a
+BB9_31:
+	xor	a, a
+	ld	(_optix_guidata+2), a
+BB9_32:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_ClickButton
+_optix_ClickButton:
+	ld	hl, -720868
+	ld.sis	bc, 1
+	ld	iy, (_optix_button)
+	ld	a, (_optix_buttoninfo+1)
+	ld	e, a
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	call	__sand
+	ld	a, (_optix_guidata+2)
+	bit	0, l
+	jr	z, BB10_3
+	or	a, a
+	jr	z, BB10_3
+	or	a, a
+	sbc	hl, hl
+	ld	l, e
+	ld	bc, 28
+	call	__imulu
+	push	hl
+	pop	de
+	add	iy, de
+	ld	hl, (iy + 24)
+	call	__indcallhl
+	xor	a, a
+	ld	(_optix_guidata+2), a
+BB10_3:
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_CusText
+_optix_CusText:
+	ld	hl, -4
+	call	__frameset
+	ld	a, (ix + 6)
+	ld	hl, _optix_guicolors
+	ld	(ix - 4), a
+	bit	0, a
+	jr	nz, BB11_2
+	ld	de, 5
+	jr	BB11_3
+BB11_2:
+	ld	de, 7
+BB11_3:
+	add	hl, de
+	ld	(ix - 3), hl
+	ld	l, (hl)
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	ld	a, (_optix_guicolors+6)
+	ld	l, a
+	ld	a, (_optix_guicolors+4)
+	bit	0, (ix - 4)
+	jr	nz, BB11_5
+	ld	l, a
+BB11_5:
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, (ix - 3)
+	ld	a, (hl)
+	ld	(ix + 6), a
+	ld	sp, ix
+	pop	ix
+	jp	_gfx_SetTextTransparentColor
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_WhiText
+_optix_WhiText:
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	scf
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextTransparentColor
+	pop	hl
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_BlaText
+_optix_BlaText:
+	scf
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	scf
+	sbc	hl, hl
+	push	hl
+	call	_gfx_SetTextTransparentColor
+	pop	hl
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_SetDefaultColors
+_optix_SetDefaultColors:
+	ld	l, 0
+	ld	e, -1
+	ld	c, -32
+	ld	h, 74
+	ld	a, l
+	ld	(_optix_guicolors), a
+	ld	(_optix_guicolors+1), a
+	ld	a, e
+	ld	(_optix_guicolors+2), a
+	ld	(_optix_guicolors+4), a
+	ld	a, l
+	ld	(_optix_guicolors+5), a
+	ld	(_optix_guicolors+6), a
+	ld	a, e
+	ld	(_optix_guicolors+7), a
+	ld	a, c
+	ld	(_optix_guicolors+3), a
+	ld	a, h
+	ld	(_optix_guicolors+8), a
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_SetDefaultSettings
+_optix_SetDefaultSettings:
+	ld	de, 0
+	xor	a, a
+	ld	hl, _optix_guidata+5
+	ld	iyl, 10
+	ld	iyh, 1
+	ld	(_optix_cursor), de
+	ld	(_optix_cursor+3), a
+	ld	(_optix_guidata+5), a
+	push	hl
+	pop	de
+	inc	de
+	ld	bc, 5
+	ldir
+	ld	a, iyl
+	ld	(_optix_guisettings+2), a
+	ld	a, iyh
+	ld	(_optix_buttoninfo+1), a
+	ld	(_optix_guidata+2), a
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_VertScrollbar
+_optix_VertScrollbar:
+	call	__frameset0
+	ld	a, (ix + 15)
+	ld	l, (ix + 21)
+	ld	h, (ix + 24)
+	ld	bc, 0
+	ld	c, (ix + 18)
+	ld	iy, 1
+	push	iy
+	ld	e, h
+	push	de
+	push	hl
+	push	bc
+	ld	l, a
+	push	hl
+	ld	l, (ix + 12)
+	push	hl
+	ld	l, (ix + 9)
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_optix_Scrollbar
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_Scrollbar
+_optix_Scrollbar:
+	ld	hl, -15
+	call	__frameset
+	ld	a, (ix + 15)
+	inc	a
+	ld	(ix - 9), a
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	de
+	ld	e, (ix + 9)
+	ld	(ix - 3), de
+	ld	l, (ix + 21)
+	ld	(ix - 6), hl
+	push	hl
+	ld	hl, (ix + 18)
+	push	hl
+	push	de
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 6)
+	push	hl
+	ld	hl, (ix + 18)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	bit	0, (ix + 24)
+	jr	z, BB17_2
+	ld	a, (_optix_guicolors+3)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+BB17_2:
+	ld	a, (ix + 27)
+	ld	de, 2
+	ld	bc, 0
+	push	bc
+	pop	iy
+	push	af
+	ld	a, (ix + 12)
+	ld	iyl, a
+	pop	af
+	ld	c, (ix - 9)
+	ld	(ix - 12), bc
+	dec	bc
+	lea	hl, iy
+	or	a, a
+	sbc	hl, bc
+	call	pe, __setflag
+	jp	p, BB17_5
+	ld	hl, (ix + 6)
+	add	hl, de
+	ld	(ix - 15), hl
+	bit	0, a
+	jp	z, BB17_7
+	ld	hl, (ix - 3)
+	add	hl, de
+	ld	(ix - 3), hl
+	ld	b, 0
+	ld	c, (ix + 21)
+	ld	l, c
+	ld	h, b
+	ld.sis	de, -4
+	add.sis	hl, de
+	ld	c, (ix - 9)
+	call	__sdivs
+	ld	c, l
+	ld	b, h
+	ld	a, b
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	ld	h, a
+	ld	l, c
+	ld	(ix - 9), hl
+	lea	bc, iy
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	(ix - 3), iy
+	ld	hl, (ix + 18)
+	ld	de, -4
+	add	hl, de
+	ex	de, hl
+	ld	(ix - 6), de
+	ld	hl, (ix - 9)
+	push	hl
+	push	de
+	push	iy
+	ld	hl, (ix - 15)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+8)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	ld	hl, (ix - 15)
+	jp	BB17_10
+BB17_5:
+	bit	0, a
+	jp	z, BB17_9
+	ld	hl, (ix + 6)
+	ld	de, 2
+	add	hl, de
+	ld	(ix - 12), hl
+	ld	b, d
+	ld	c, (ix + 21)
+	ld	l, c
+	ld	h, b
+	ld.sis	de, -4
+	add.sis	hl, de
+	ld	c, (ix - 9)
+	call	__sdivs
+	ld	e, l
+	ld	d, h
+	ld	a, d
+	ld	l, a
+	rlc	l
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	b, a
+	ld	c, e
+	ld	(ix - 9), bc
+	ld	hl, (ix - 3)
+	ld	de, -2
+	add	hl, de
+	ld	de, (ix - 6)
+	add	hl, de
+	or	a, a
+	sbc	hl, bc
+	push	hl
+	pop	iy
+	ld	(ix - 3), iy
+	ld	hl, (ix + 18)
+	ld	de, -4
+	add	hl, de
+	ld	(ix - 6), hl
+	push	bc
+	push	hl
+	push	iy
+	ld	hl, (ix - 12)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+8)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 9)
+	push	hl
+	ld	hl, (ix - 6)
+	jr	BB17_8
+BB17_7:
+	ld	hl, (ix + 18)
+	ld	bc, -4
+	add	hl, bc
+	ld	bc, (ix - 12)
+	call	__idivu
+	ld	(ix - 9), hl
+	lea	bc, iy
+	call	__imulu
+	push	hl
+	pop	iy
+	ld	de, (ix - 15)
+	add	iy, de
+	ld	(ix - 12), iy
+	ld	hl, (ix - 3)
+	ld	de, 2
+	add	hl, de
+	ex	de, hl
+	ld	(ix - 3), de
+	ld	hl, (ix - 6)
+	ld	bc, -4
+	add	hl, bc
+	ld	(ix - 6), hl
+	push	hl
+	ld	hl, (ix - 9)
+	push	hl
+	push	de
+	push	iy
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+8)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 6)
+	push	hl
+	ld	hl, (ix - 9)
+BB17_8:
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	ld	hl, (ix - 12)
+	jr	BB17_10
+BB17_9:
+	ld	de, (ix + 18)
+	push	de
+	pop	hl
+	ld	bc, -4
+	add	hl, bc
+	ld	bc, (ix - 12)
+	call	__idivu
+	push	hl
+	pop	iy
+	ld	hl, (ix + 6)
+	ld	bc, -2
+	add	hl, bc
+	add	hl, de
+	lea	bc, iy
+	ld	(ix - 12), bc
+	or	a, a
+	sbc	hl, bc
+	ld	(ix - 9), hl
+	ld	iy, (ix - 3)
+	ld	de, 2
+	add	iy, de
+	ld	(ix - 3), iy
+	ld	hl, (ix - 6)
+	ld	de, -4
+	add	hl, de
+	ld	(ix - 6), hl
+	push	hl
+	push	bc
+	push	iy
+	ld	hl, (ix - 9)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+8)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 6)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	ld	hl, (ix - 9)
+BB17_10:
+	push	hl
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_HorizScrollbar
+_optix_HorizScrollbar:
+	call	__frameset0
+	ld	a, (ix + 15)
+	ld	bc, (ix + 18)
+	ld	l, (ix + 21)
+	ld	h, (ix + 24)
+	ld	iy, 0
+	push	iy
+	ld	e, h
+	push	de
+	push	hl
+	push	bc
+	ld	l, a
+	push	hl
+	ld	l, (ix + 12)
+	push	hl
+	ld	l, (ix + 9)
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_optix_Scrollbar
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_RenderWindow
+_optix_RenderWindow:
+	ld	hl, -18
+	call	__frameset
+	ld	hl, (ix + 6)
+	ld	(ix - 9), hl
+	ld	hl, (ix + 9)
+	ld	a, (ix + 12)
+	ld	iy, 120
+	ld	c, 1
+	ld	de, 0
+	ld	(ix - 3), de
+	ld	e, l
+	ld	d, h
+	ld	(ix - 6), de
+	call	__sshru
+	ld	(ix - 12), hl
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	ld	(ix - 15), hl
+	ld	bc, 12
+	add	hl, bc
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	bc
+	lea	hl, iy
+	or	a, a
+	sbc	hl, bc
+	ld	(ix - 18), hl
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld.sis	hl, 160
+	ld	de, (ix - 12)
+	or	a, a
+	sbc.sis	hl, de
+	ld.sis	bc, 255
+	call	__sand
+	ld	de, (ix - 3)
+	ld	e, l
+	ld	d, h
+	ld	(ix - 3), de
+	ld	hl, (ix - 18)
+	ld	bc, 255
+	call	__iand
+	ld	(ix - 12), hl
+	push	hl
+	pop	iy
+	ld	de, 12
+	add	iy, de
+	ld	(ix - 18), iy
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	push	iy
+	ld	hl, (ix - 3)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 12
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	ld	hl, (ix - 9)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, 160
+	or	a, a
+	sbc	hl, de
+	ld	de, 3
+	ld	iy, (ix - 12)
+	add	iy, de
+	ld	de, (ix - 9)
+	ld	(ix + 6), de
+	ld	(ix + 9), hl
+	ld	(ix + 12), iy
+	ld	sp, ix
+	pop	ix
+	jp	_gfx_PrintStringXY
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_WordWrap
+_optix_WordWrap:
+	ld	hl, -237
+	call	__frameset
+	ld	bc, -207
+	lea	iy, ix
+	add	iy, bc
+	ld	bc, -231
+	lea	hl, ix
+	add	hl, bc
+	ld	(hl), iy
+	lea	hl, ix - 7
+	push	ix
+	ld	bc, -225
+	add	ix, bc
+	ld	(ix), hl
+	pop	ix
+	lea	hl, ix - 107
+	lea	de, iy
+	ld	bc, -210
+	lea	iy, ix
+	add	iy, bc
+	ld	(iy), de
+	push	ix
+	ld	de, -213
+	add	ix, de
+	ld	(ix), hl
+	pop	ix
+	inc	hl
+	ld	(ix - 106), 0
+	push	hl
+	pop	iy
+	inc	iy
+	ld	bc, 98
+	lea	de, iy
+	ldir
+	ld	bc, -231
+	lea	hl, ix
+	add	hl, bc
+	ld	iy, (hl)
+	ld	(iy), 0
+	ld	bc, -210
+	lea	iy, ix
+	add	iy, bc
+	ld	hl, (iy)
+	push	hl
+	pop	de
+	inc	de
+	ld	bc, 99
+	ldir
+	ld	(ix - 7), 0
+	ld	hl, (ix + 6)
+	push	hl
+	call	_optix_GetStringLength
+	ld.sis	bc, 0
+	ld	de, -228
+	lea	iy, ix
+	add	iy, de
+	ld	(iy), hl
+	pop	hl
+	ld	iy, 0
+	lea	hl, iy
+	ld	de, (ix + 9)
+	ld	l, e
+	ld	h, d
+	push	ix
+	ld	de, -222
+	add	ix, de
+	ld	(ix), hl
+	pop	ix
+BB20_1:
+	ld	(ix - 107), 0
+	xor	a, a
+	ld	de, -219
+	lea	hl, ix
+	add	hl, de
+	ld	(hl), a
+BB20_2:
+	lea	de, iy
+	ld	e, c
+	ld	d, b
+	ld	hl, (ix + 6)
+	add	hl, de
+	ld	a, (hl)
+	cp	a, 32
+	jp	z, BB20_10
+	ld	(ix - 3), de
+	ld	de, -216
+	lea	hl, ix
+	add	hl, de
+	ld	(hl), bc
+	cp	a, 96
+	push	ix
+	ld	bc, -213
+	push	af
+	add	ix, bc
+	pop	af
+	ld	hl, (ix)
+	pop	ix
+	ld	de, (ix - 3)
+	jr	nz, BB20_6
+	ld	bc, -237
+	lea	iy, ix
+	add	iy, bc
+	ld	(iy), de
+	push	hl
+	call	_gfx_GetStringWidth
+	ld	bc, -234
+	lea	iy, ix
+	add	iy, bc
+	ld	(iy), hl
+	pop	hl
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	bc, -234
+	lea	iy, ix
+	add	iy, bc
+	ld	de, (iy)
+	add	hl, de
+	ex	de, hl
+	ld	bc, -222
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	or	a, a
+	sbc	hl, de
+	jp	nc, BB20_9
+	ld	hl, (ix + 6)
+	ld	bc, -237
+	lea	iy, ix
+	add	iy, bc
+	ld	de, (iy)
+	add	hl, de
+	ld	a, (hl)
+	ld	bc, -213
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	ld	iy, 0
+BB20_6:
+	lea	de, iy
+	ld	bc, -219
+	lea	iy, ix
+	add	iy, bc
+	ld	e, (iy)
+	push	hl
+	pop	iy
+	push	ix
+	ld	bc, -234
+	add	ix, bc
+	ld	(ix), de
+	pop	ix
+	add	iy, de
+	ld	(iy), a
+	ld	(iy + 1), 0
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	bc, -222
+	lea	iy, ix
+	add	iy, bc
+	ld	de, (iy)
+	or	a, a
+	sbc	hl, de
+	jr	nc, BB20_8
+	ld	de, -219
+	lea	hl, ix
+	add	hl, de
+	ld	a, (hl)
+	inc	a
+	lea	iy, ix
+	add	iy, de
+	ld	(iy), a
+	push	ix
+	ld	de, -216
+	add	ix, de
+	ld	bc, (ix)
+	pop	ix
+	inc.sis	bc
+	ld	iy, 0
+	lea	hl, iy
+	ld	l, c
+	ld	h, b
+	ld	(ix - 3), bc
+	push	ix
+	ld	bc, -228
+	add	ix, bc
+	ld	de, (ix)
+	pop	ix
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	ld	bc, (ix - 3)
+	jp	m, BB20_2
+	jp	BB20_10
+BB20_8:
+	ld	bc, -213
+	lea	hl, ix
+	add	hl, bc
+	ld	de, (hl)
+	push	de
+	pop	hl
+	ld	(ix - 3), de
+	ld	de, -234
+	lea	iy, ix
+	add	iy, de
+	ld	bc, (iy)
+	add	hl, bc
+	ld	(hl), 0
+	ld	bc, -216
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	dec.sis	hl
+	push	ix
+	add	ix, bc
+	ld	(ix), hl
+	pop	ix
+	ld	bc, -225
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	ld	de, (ix - 3)
+	push	de
+	call	_optix_AddWordWrapLine
+	ld	de, -216
+	lea	hl, ix
+	add	hl, de
+	ld	bc, (hl)
+	pop	hl
+	pop	hl
+	ld	de, -231
+	lea	hl, ix
+	add	hl, de
+	ld	iy, (hl)
+	ld	(iy), 0
+	ld	(ix - 107), 0
+	ld	iy, 0
+	jr	BB20_10
+BB20_9:
+	or	a, a
+	sbc	hl, hl
+	ex	de, hl
+	ld	bc, -219
+	lea	hl, ix
+	add	hl, bc
+	ld	e, (hl)
+	ld	(ix - 3), de
+	ld	de, -213
+	lea	iy, ix
+	add	iy, de
+	ld	bc, (iy)
+	push	bc
+	pop	hl
+	ld	de, (ix - 3)
+	add	hl, de
+	ld	(hl), 0
+	push	bc
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_strcat
+	pop	hl
+	pop	hl
+	ld	bc, -225
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_optix_AddWordWrapLine
+	pop	hl
+	pop	hl
+	ld	de, -231
+	lea	hl, ix
+	add	hl, de
+	ld	iy, (hl)
+	ld	(iy), 0
+	ld	iy, 0
+	ld	(ix - 107), 0
+	push	ix
+	ld	de, -216
+	add	ix, de
+	ld	bc, (ix)
+	pop	ix
+BB20_10:
+	lea	de, iy
+	ld	e, c
+	ld	d, b
+	ld	hl, (ix + 6)
+	add	hl, de
+	ld	a, (hl)
+	cp	a, 96
+	ld	de, -216
+	lea	hl, ix
+	push	af
+	add	hl, de
+	pop	af
+	ld	(hl), bc
+	jr	nz, BB20_12
+	ld	de, -213
+	lea	hl, ix
+	add	hl, de
+	ld	bc, (hl)
+	push	ix
+	ld	de, -219
+	add	ix, de
+	ld	a, (ix)
+	pop	ix
+	jr	BB20_13
+BB20_12:
+	lea	de, iy
+	ld	bc, -219
+	lea	hl, ix
+	add	hl, bc
+	ld	a, (hl)
+	ld	e, a
+	inc	a
+	ld	(ix - 3), de
+	push	ix
+	ld	de, -213
+	add	ix, de
+	ld	bc, (ix)
+	pop	ix
+	push	bc
+	pop	hl
+	ld	de, (ix - 3)
+	add	hl, de
+	ld	(hl), 32
+BB20_13:
+	lea	de, iy
+	ld	e, a
+	push	bc
+	pop	hl
+	add	hl, de
+	ld	(hl), 0
+	push	bc
+	call	_gfx_GetStringWidth
+	ld	bc, -219
+	lea	iy, ix
+	add	iy, bc
+	ld	(iy), hl
+	pop	hl
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	bc, -219
+	lea	iy, ix
+	add	iy, bc
+	ld	de, (iy)
+	add	hl, de
+	ex	de, hl
+	ld	bc, -222
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	or	a, a
+	sbc	hl, de
+	jr	nc, BB20_15
+	ld	bc, -225
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_optix_AddWordWrapLine
+	pop	hl
+	pop	hl
+	ld	bc, -213
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_strcpy
+	jr	BB20_16
+BB20_15:
+	ld	bc, -213
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_strcat
+BB20_16:
+	pop	hl
+	pop	hl
+	ld	de, -216
+	lea	hl, ix
+	add	hl, de
+	ld	bc, (hl)
+	inc.sis	bc
+	ld	iy, 0
+	lea	hl, iy
+	ld	l, c
+	ld	h, b
+	ld	(ix - 3), bc
+	push	ix
+	ld	bc, -228
+	add	ix, bc
+	ld	de, (ix)
+	pop	ix
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	ld	bc, (ix - 3)
+	jp	m, BB20_1
+	ld	bc, -225
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	ld	bc, -210
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_optix_AddWordWrapLine
+	pop	hl
+	pop	hl
+	ld	a, (ix - 7)
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_GetStringLength
+_optix_GetStringLength:
+	call	__frameset0
+	ld	iy, (ix + 6)
+	ld	de, 0
+BB21_1:
+	lea	hl, iy
+	add	hl, de
+	inc	de
+	ld	a, (hl)
+	or	a, a
+	jr	nz, BB21_1
+	dec	de
+	ex	de, hl
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_AddWordWrapLine
+_optix_AddWordWrapLine:
+	ld	hl, -1
+	call	__frameset
+	ld	iy, (ix + 9)
+	ld	bc, 201
+	ld	de, (_optix_wordwraptext)
+	or	a, a
+	sbc	hl, hl
+	ld	l, (iy)
+	call	__imulu
+	add	hl, bc
+	push	hl
+	push	de
+	call	_realloc
+	push	hl
+	pop	iy
+	pop	hl
+	pop	hl
+	ld	(_optix_wordwraptext), iy
+	lea	hl, iy
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB22_2
+	ld	de, (ix + 6)
+	ld	hl, (ix + 9)
+	ld	a, (hl)
+	ld	(ix - 1), a
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 201
+	call	__imulu
+	push	hl
+	pop	bc
+	add	iy, bc
+	push	de
+	push	iy
+	call	_strcpy
+	pop	hl
+	pop	hl
+	ld	a, (ix - 1)
+	inc	a
+	ld	hl, (ix + 9)
+	ld	(hl), a
+BB22_2:
+	inc	sp
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_PrintWordWrap
+_optix_PrintWordWrap:
+	ld	hl, -240
+	call	__frameset
+	ld	bc, -206
+	lea	iy, ix
+	add	iy, bc
+	ld	bc, -221
+	lea	hl, ix
+	add	hl, bc
+	ld	(hl), iy
+	lea	hl, iy
+	ld	bc, -218
+	lea	iy, ix
+	add	iy, bc
+	ld	(iy), hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	ld	bc, 0
+	push	bc
+	pop	hl
+	ld	l, (ix + 21)
+	ld	de, -209
+	lea	iy, ix
+	add	iy, de
+	ld	(iy), hl
+	push	bc
+	pop	hl
+	ld	l, (ix + 18)
+	push	ix
+	ld	de, -215
+	add	ix, de
+	ld	(ix), hl
+	pop	ix
+	push	bc
+	pop	iy
+	push	af
+	ld	a, (ix + 9)
+	ld	iyl, a
+	pop	af
+	push	bc
+	pop	de
+	ld	e, (ix + 12)
+	push	bc
+	pop	hl
+	ld	l, (ix + 15)
+	push	ix
+	ld	bc, -212
+	add	ix, bc
+	ld	(ix), hl
+	pop	ix
+	ld	hl, (ix + 6)
+	ld	c, 1
+	call	__sshru
+	ld	bc, 0
+	ld	c, l
+	ld	b, h
+	ld	(ix - 3), de
+	ld	de, -224
+	lea	hl, ix
+	add	hl, de
+	ld	(hl), iy
+	add	iy, bc
+	ld	de, (ix - 3)
+	push	ix
+	ld	bc, -227
+	add	ix, bc
+	ld	(ix), de
+	pop	ix
+	ex	de, hl
+	ld	de, -9
+	add	hl, de
+	push	ix
+	ld	bc, -212
+	add	ix, bc
+	ld	de, (ix)
+	pop	ix
+	add	hl, de
+	push	ix
+	ld	de, -230
+	add	ix, de
+	ld	(ix), hl
+	pop	ix
+	ld	de, -215
+	lea	hl, ix
+	add	hl, de
+	ld	hl, (hl)
+	ld	bc, 201
+	call	__imulu
+	xor	a, a
+	push	ix
+	add	ix, de
+	ld	(ix), hl
+	pop	ix
+	ld	(ix - 3), bc
+	push	ix
+	ld	bc, -209
+	add	ix, bc
+	ld	de, (ix)
+	pop	ix
+	ld	bc, (ix - 3)
+BB23_1:
+	push	de
+	pop	hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jp	z, BB23_9
+	ld	l, (ix + 21)
+	cp	a, l
+	jp	nc, BB23_9
+	ld	bc, -239
+	lea	hl, ix
+	add	hl, bc
+	ld	(hl), de
+	push	ix
+	ld	bc, -236
+	add	ix, bc
+	ld	(ix), iy
+	pop	ix
+	or	a, a
+	sbc	hl, hl
+	ld	bc, -240
+	lea	iy, ix
+	add	iy, bc
+	ld	(iy), a
+	ld	l, a
+	push	ix
+	ld	bc, -233
+	add	ix, bc
+	ld	(ix), hl
+	pop	ix
+	ld	hl, (_optix_wordwraptext)
+	push	ix
+	ld	bc, -215
+	add	ix, bc
+	ld	de, (ix)
+	pop	ix
+	add	hl, de
+	push	hl
+	ld	bc, -218
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_strcpy
+	pop	hl
+	pop	hl
+	ld	bc, -221
+	lea	hl, ix
+	add	hl, bc
+	ld	iy, (hl)
+	ld	a, (iy)
+	cp	a, 126
+	jp	nz, BB23_6
+	ld	bc, -209
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	ld	bc, -233
+	lea	iy, ix
+	add	iy, bc
+	ld	de, (iy)
+	or	a, a
+	sbc	hl, de
+	ld	de, 2
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	m, BB23_7
+	ld	bc, -221
+	lea	hl, ix
+	add	hl, bc
+	ld	iy, (hl)
+	ld	(iy), 32
+	ld	hl, 2
+	push	hl
+	push	hl
+	call	_gfx_SetTextScale
+	pop	hl
+	pop	hl
+	ld	bc, -218
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	de, 4
+	add	hl, de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	(ix - 3), bc
+	ld	bc, -236
+	lea	iy, ix
+	add	iy, bc
+	ld	hl, (iy)
+	or	a, a
+	sbc	hl, de
+	push	hl
+	pop	de
+	push	ix
+	ld	bc, -233
+	add	ix, bc
+	ld	hl, (ix)
+	pop	ix
+	ld	bc, (ix - 3)
+	ld	(ix - 3), de
+	push	ix
+	ld	de, -212
+	add	ix, de
+	ld	bc, (ix)
+	pop	ix
+	call	__imulu
+	push	hl
+	pop	bc
+	push	ix
+	ld	de, -230
+	add	ix, de
+	ld	hl, (ix)
+	pop	ix
+	add	hl, bc
+	push	hl
+	ld	de, (ix - 3)
+	push	de
+	ld	bc, -218
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	push	hl
+	call	_gfx_SetTextScale
+	ld	de, -236
+	lea	hl, ix
+	add	hl, de
+	ld	iy, (hl)
+	push	ix
+	ld	de, -209
+	add	ix, de
+	ld	bc, (ix)
+	pop	ix
+	pop	hl
+	pop	hl
+	ld	bc, -240
+	lea	hl, ix
+	add	hl, bc
+	ld	a, (hl)
+	inc	a
+	jp	BB23_8
+BB23_6:
+	ld	de, -233
+	lea	hl, ix
+	add	hl, de
+	ld	hl, (hl)
+	ld	de, -212
+	lea	iy, ix
+	add	iy, de
+	ld	bc, (iy)
+	call	__imulu
+	ld	(ix - 3), bc
+	push	ix
+	ld	bc, -227
+	add	ix, bc
+	ld	de, (ix)
+	pop	ix
+	add	hl, de
+	push	hl
+	ld	de, -224
+	lea	hl, ix
+	add	hl, de
+	ld	hl, (hl)
+	push	hl
+	ld	de, -218
+	lea	hl, ix
+	add	hl, de
+	ld	hl, (hl)
+	push	hl
+	ld	bc, (ix - 3)
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	de, -240
+	lea	hl, ix
+	add	hl, de
+	ld	a, (hl)
+	ld	de, -209
+	lea	iy, ix
+	add	iy, de
+	ld	bc, (iy)
+	push	ix
+	ld	bc, -236
+	add	ix, bc
+	ld	iy, (ix)
+	pop	ix
+	jr	BB23_8
+BB23_7:
+	ld	bc, -240
+	lea	hl, ix
+	add	hl, bc
+	ld	a, (hl)
+	ld	bc, -236
+	lea	iy, ix
+	add	iy, bc
+	ld	iy, (iy)
+BB23_8:
+	inc	a
+	ld	de, 201
+	ld	bc, -215
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	add	hl, de
+	push	ix
+	add	ix, bc
+	ld	(ix), hl
+	pop	ix
+	ld	bc, -239
+	lea	hl, ix
+	add	hl, bc
+	ld	de, (hl)
+	dec	de
+	jp	BB23_1
+BB23_9:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_Message
+_optix_Message:
+	ld	hl, -48
+	call	__frameset
+	ld	hl, (ix + 9)
+	ld	bc, (ix + 15)
+	ld.sis	de, 32
+	ld	(ix - 2), e
+	ld	(ix - 1), d
+	push	bc
+	push	hl
+	call	_optix_WordWrap
+	pop	hl
+	pop	hl
+	ld	l, (ix + 18)
+	cp	a, l
+	ld	(ix - 12), a
+	ld	iyl, a
+	jr	c, BB24_2
+	push	af
+	ld	a, (ix + 18)
+	ld	iyl, a
+	pop	af
+BB24_2:
+	lea	de, ix - 2
+	ld	(ix - 45), de
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	hl, (ix + 15)
+	ld	e, l
+	ld	d, h
+	ld	(ix - 15), de
+	ex	de, hl
+	ld	de, 6
+	add	hl, de
+	ld	(ix - 5), hl
+	push	bc
+	pop	hl
+	ld	(ix - 30), iy
+	ex	de, hl
+	ld	e, iyl
+	ex	de, hl
+	ld	c, (ix + 12)
+	ld	(ix - 11), hl
+	call	__imulu
+	ld	(ix - 8), hl
+	ld	de, 18
+	add	hl, de
+	ld	(ix - 21), hl
+BB24_3:
+	call	_kb_AnyKey
+	or	a, a
+	jr	z, BB24_5
+	call	_kb_Scan
+	jr	BB24_3
+BB24_5:
+	ld	c, 1
+	ld	hl, (ix - 5)
+	call	__ishru
+	ld	(ix - 18), hl
+	ld	hl, (ix - 21)
+	call	__ishru
+	push	hl
+	pop	iy
+	ld	(ix - 24), iy
+	ld	bc, 0
+	ld	c, (ix - 12)
+	ld	hl, 160
+	ld	de, (ix - 18)
+	or	a, a
+	sbc	hl, de
+	ld	(ix - 21), hl
+	ld	hl, 120
+	lea	de, iy
+	or	a, a
+	sbc	hl, de
+	push	hl
+	pop	iy
+	push	bc
+	pop	hl
+	ld	bc, (ix - 11)
+	or	a, a
+	sbc	hl, bc
+	ld	(ix - 48), hl
+	ld	hl, (ix - 21)
+	ld	bc, 255
+	call	__iand
+	ld	(ix - 11), hl
+	lea	hl, iy
+	call	__iand
+	push	hl
+	pop	bc
+	ld	de, 12
+	add	hl, de
+	ld	(ix - 21), hl
+	ld	hl, (ix - 8)
+	ld	de, 6
+	add	hl, de
+	ld	(ix - 8), hl
+	ld	(ix - 33), bc
+	push	bc
+	pop	hl
+	ld	de, 3
+	add	hl, de
+	ld	(ix - 27), hl
+	ld	hl, (ix - 15)
+	add	hl, de
+	ld	de, (ix - 11)
+	add	hl, de
+	ld	(ix - 15), hl
+	ld	a, -90
+	ld	hl, (ix - 18)
+	sub	a, l
+	ld	l, a
+	ld	(ix - 36), hl
+	ld	a, -120
+	ld	hl, (ix - 24)
+	sub	a, l
+	ld	l, a
+	ld	(ix - 39), hl
+	ld	l, (ix + 12)
+	ld	(ix - 42), hl
+	xor	a, a
+	ld	l, a
+	ld	(ix - 18), hl
+	inc	a
+BB24_6:
+	ld	hl, -720868
+	ld.sis	bc, 1
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	call	__sand
+	bit	0, l
+	jp	nz, BB24_31
+	ld	(ix - 24), a
+	call	_kb_Scan
+	ld	a, (ix + 18)
+	ld	l, (ix - 12)
+	cp	a, l
+	jp	nc, BB24_21
+	ld	iy, -720866
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	a, l
+	bit	3, a
+	ld	e, -1
+	ld	l, e
+	jr	z, BB24_11
+	ld	l, 0
+BB24_11:
+	ld	iy, (ix - 18)
+	ld	a, iyl
+	or	a, a
+	jr	z, BB24_13
+	ld	e, 0
+BB24_13:
+	ld	a, l
+	or	a, e
+	ld	l, a
+	ld	a, (ix - 24)
+	and	a, 1
+	xor	a, 1
+	ld	e, a
+	ld	a, l
+	or	a, e
+	ld	l, a
+	xor	a, 1
+	ld	b, 7
+	call	__bshl
+	rlc	a
+	sbc	a, a
+	ld	e, a
+	ld	a, iyl
+	add	a, e
+	ld	e, a
+	bit	0, l
+	jr	nz, BB24_15
+	xor	a, a
+	ld	(ix - 24), a
+BB24_15:
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 1
+	call	__sand
+	bit	0, l
+	jr	nz, BB24_17
+	ld	(ix - 18), de
+	jr	BB24_21
+BB24_17:
+	or	a, a
+	sbc	hl, hl
+	push	de
+	pop	iy
+	ld	l, e
+	ld	a, (ix - 24)
+	and	a, 1
+	xor	a, 1
+	ld	e, a
+	ld	bc, (ix - 48)
+	sbc	hl, bc
+	call	pe, __setflag
+	ld	a, -1
+	jp	p, BB24_19
+	ld	a, 0
+BB24_19:
+	or	a, e
+	ld	l, a
+	xor	a, 1
+	and	a, 1
+	ld	e, a
+	ld	a, iyl
+	add	a, e
+	ld	e, a
+	ld	(ix - 18), de
+	bit	0, l
+	jr	nz, BB24_21
+	xor	a, a
+	ld	(ix - 24), a
+BB24_21:
+	call	_kb_AnyKey
+	or	a, a
+	ld	a, 1
+	jr	z, BB24_23
+	ld	a, (ix - 24)
+BB24_23:
+	ld	(ix - 24), a
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 8)
+	push	hl
+	ld	hl, (ix - 5)
+	push	hl
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, (ix - 11)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 8)
+	push	hl
+	ld	hl, (ix - 5)
+	push	hl
+	ld	hl, (ix - 21)
+	push	hl
+	ld	hl, (ix - 11)
+	push	hl
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 12
+	push	hl
+	ld	hl, (ix - 5)
+	push	hl
+	ld	hl, (ix - 33)
+	push	hl
+	ld	hl, (ix - 11)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, 160
+	or	a, a
+	sbc	hl, de
+	ld	de, (ix - 27)
+	push	de
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (ix + 18)
+	ld	l, (ix - 12)
+	cp	a, l
+	jr	nc, BB24_30
+	ld	de, (ix - 18)
+	ld	a, e
+	or	a, a
+	jr	nz, BB24_26
+	ld	(ix - 2), 25
+	jr	BB24_29
+BB24_26:
+	or	a, a
+	sbc	hl, hl
+	ld	l, e
+	ld	de, (ix - 48)
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB24_28
+	ld	(ix - 2), 18
+	jr	BB24_29
+BB24_28:
+	ld	(ix - 2), 24
+BB24_29:
+	ld	hl, (ix - 45)
+	push	hl
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	hl, (ix - 15)
+	or	a, a
+	sbc	hl, de
+	ld	de, (ix - 27)
+	push	de
+	push	hl
+	ld	hl, (ix - 45)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+BB24_30:
+	ld	hl, (ix - 30)
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 42)
+	push	hl
+	ld	hl, (ix - 39)
+	push	hl
+	ld	hl, (ix - 36)
+	push	hl
+	ld	hl, (ix + 15)
+	push	hl
+	call	_optix_PrintWordWrap
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	call	_gfx_SwapDraw
+	ld	a, (ix - 24)
+	jp	BB24_6
+BB24_31:
+	call	_kb_AnyKey
+	or	a, a
+	jr	z, BB24_33
+	call	_kb_Scan
+	jr	BB24_31
+BB24_33:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_Menu
+_optix_Menu:
+	ld	hl, -42
+	call	__frameset
+	ld	de, (ix + 9)
+	ld.sis	hl, 32
+	ld	(ix - 2), l
+	ld	(ix - 1), h
+	push	hl
+	push	de
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	push	hl
+	push	hl
+	push	hl
+	push	hl
+	push	hl
+	push	hl
+	push	hl
+	call	_optix_AddMenu
+	ld	hl, 30
+	add	hl, sp
+	ld	sp, hl
+	ld	l, (ix + 18)
+	cp	a, l
+	ld	(ix - 21), a
+	ld	l, a
+	jr	c, BB25_2
+	ld	l, (ix + 18)
+BB25_2:
+	ld	(ix - 30), hl
+	lea	de, ix - 2
+	ld	(ix - 24), de
+	call	_optix_DeleteLastMenu
+	ld	hl, (ix + 15)
+	ld	a, 1
+	ld	c, a
+	call	__sshru
+	ld	a, -96
+	sub	a, l
+	ld	(ix - 5), a
+	ld	iy, 0
+	lea	hl, iy
+	ld	de, (ix - 30)
+	ld	l, e
+	lea	bc, iy
+	ld	c, (ix + 12)
+	ld	(ix - 39), hl
+	call	__imulu
+	ld	(ix - 11), hl
+	ld	de, 12
+	add	hl, de
+	ld	c, 1
+	call	__ishru
+	ld	a, -124
+	ld	(ix - 8), hl
+	sub	a, l
+	ld	l, a
+	push	hl
+	ld	de, (ix + 9)
+	push	de
+	ld	e, (ix + 12)
+	push	de
+	ld	de, (ix + 15)
+	push	de
+	ld	de, (ix - 30)
+	push	de
+	ld	de, 1
+	push	de
+	push	iy
+	push	iy
+	push	hl
+	lea	hl, iy
+	ld	l, (ix - 5)
+	push	hl
+	call	_optix_AddMenu
+	ld	hl, 30
+	add	hl, sp
+	ld	sp, hl
+	ld	a, (_optix_guidata+1)
+	dec	a
+	ld	(ix - 14), a
+	ld	(_optix_guidata), a
+	ld	hl, (_optix_menu)
+	ld	(ix - 36), hl
+BB25_3:
+	call	_kb_AnyKey
+	or	a, a
+	jr	z, BB25_5
+	call	_kb_Scan
+	jr	BB25_3
+BB25_5:
+	ld	de, 0
+	ld	hl, (ix + 15)
+	ld	e, l
+	ld	d, h
+	ld	(ix - 33), de
+	ld	hl, 120
+	ld	bc, (ix - 8)
+	or	a, a
+	sbc	hl, bc
+	ld	bc, 255
+	call	__iand
+	push	hl
+	pop	de
+	ld	iy, 0
+	lea	hl, iy
+	ld	l, (ix - 14)
+	ld	bc, 20
+	ld	(ix - 42), hl
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	hl, (ix - 36)
+	add	hl, bc
+	ld	(ix - 17), hl
+	push	af
+	ld	a, (ix - 5)
+	ld	iyl, a
+	pop	af
+	lea	hl, iy
+	dec	hl
+	ld	(ix - 5), hl
+	push	de
+	pop	hl
+	ld	bc, 11
+	add	hl, bc
+	ld	(ix - 14), hl
+	ld	hl, (ix - 33)
+	ld	bc, 2
+	add	hl, bc
+	ld	(ix - 8), hl
+	ld	hl, (ix - 11)
+	add	hl, bc
+	ld	(ix - 11), hl
+	push	de
+	pop	hl
+	dec	hl
+	ld	(ix - 27), hl
+	ex	de, hl
+	add	hl, bc
+	ld	(ix - 20), hl
+	ld	de, (ix - 33)
+	add	iy, de
+	ld	(ix - 33), iy
+BB25_6:
+	ld	iy, (ix - 17)
+	bit	0, (iy + 15)
+	jr	z, BB25_9
+	ld	hl, -720868
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 1
+	call	__sand
+	bit	0, l
+	jr	nz, BB25_9
+	ld	hl, -720878
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	a, l
+	bit	5, a
+	jp	z, BB25_18
+BB25_9:
+	call	_optix_UpdateCurrMenu
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 11)
+	push	hl
+	ld	hl, (ix - 8)
+	push	hl
+	ld	hl, (ix - 14)
+	push	hl
+	ld	hl, (ix - 5)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 11)
+	push	hl
+	ld	hl, (ix - 8)
+	push	hl
+	ld	hl, (ix - 14)
+	push	hl
+	ld	hl, (ix - 5)
+	push	hl
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 12
+	push	hl
+	ld	hl, (ix - 8)
+	push	hl
+	ld	hl, (ix - 27)
+	push	hl
+	ld	hl, (ix - 5)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, 160
+	or	a, a
+	sbc	hl, de
+	ld	de, (ix - 20)
+	push	de
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (ix + 18)
+	ld	l, (ix - 21)
+	cp	a, l
+	jr	nc, BB25_17
+	ld	iy, (ix - 17)
+	ld	l, (iy + 16)
+	ld	a, l
+	or	a, a
+	jr	nz, BB25_13
+	ld	l, (iy + 14)
+	ld	de, (ix - 30)
+	ld	a, e
+	cp	a, l
+	jr	nc, BB25_16
+	ld	(ix - 2), 25
+	jr	BB25_16
+BB25_13:
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	e, l
+	push	bc
+	pop	hl
+	ld	l, (iy + 14)
+	ld	bc, (ix - 39)
+	or	a, a
+	sbc	hl, bc
+	push	hl
+	pop	bc
+	ex	de, hl
+	or	a, a
+	sbc	hl, bc
+	call	pe, __setflag
+	jp	p, BB25_15
+	ld	(ix - 2), 18
+	jr	BB25_16
+BB25_15:
+	ld	(ix - 2), 24
+BB25_16:
+	ld	hl, (ix - 24)
+	push	hl
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	hl, (ix - 33)
+	or	a, a
+	sbc	hl, de
+	ld	de, (ix - 20)
+	push	de
+	push	hl
+	ld	hl, (ix - 24)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+BB25_17:
+	ld	a, (_optix_guidata)
+	ld	l, a
+	push	hl
+	call	_optix_RenderMenu
+	pop	hl
+	call	_gfx_SwapDraw
+	jp	BB25_6
+BB25_18:
+	ld	bc, 20
+	ld	hl, (ix - 42)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 36)
+	add	iy, de
+	ld	a, (iy + 12)
+	ld	(ix - 5), a
+	call	_optix_DeleteLastMenu
+	ld	a, (ix - 5)
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_AddMenu
+_optix_AddMenu:
+	ld	hl, -134
+	call	__frameset
+	ld.sis	hl, 0
+	ld	(ix - 112), hl
+	lea	iy, ix - 106
+	ld	(ix - 116), iy
+	lea	hl, iy + 2
+	ld	(ix - 104), 0
+	push	hl
+	pop	de
+	inc	de
+	ld	bc, 97
+	ldir
+	ld	de, (_optix_menu)
+	ld	iy, _optix_guidata+1
+	inc	(iy)
+	or	a, a
+	sbc	hl, hl
+	ld	l, (iy)
+	ld	bc, 20
+	call	__imulu
+	push	hl
+	push	de
+	call	_realloc
+	push	hl
+	pop	de
+	pop	hl
+	pop	hl
+	ld	(_optix_menu), de
+	ld	a, (_optix_guidata+1)
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	dec	hl
+	ld	bc, 20
+	ld	(ix - 125), hl
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	(ix - 122), de
+	push	de
+	pop	iy
+	add	iy, bc
+	ld	a, (ix + 18)
+	ld	(iy + 5), a
+	ld	a, (ix + 21)
+	ld	(iy + 6), a
+	ld	a, (ix + 24)
+	ld	(iy + 7), a
+	ld	a, (ix + 27)
+	ld	(iy + 8), a
+	ld	(iy + 16), 0
+	ld	hl, (ix + 6)
+	ld	(iy), l
+	ld	(iy + 1), h
+	ld	a, (ix + 9)
+	ld	(iy + 2), a
+	ld	a, (ix + 12)
+	ld	(iy + 3), a
+	ld	a, (ix + 15)
+	ld	(iy + 4), a
+	ld	(iy + 15), 0
+	ld	(iy + 12), 0
+	ld	hl, 0
+	ld	(ix - 109), hl
+	ld	(ix - 128), iy
+	ld	(iy + 9), hl
+	ld	hl, (ix + 30)
+	push	hl
+	call	_optix_GetStringLength
+	push	hl
+	pop	de
+	pop	hl
+	xor	a, a
+	ld	(ix - 113), a
+BB26_1:
+	ld	iy, 0
+	lea	hl, iy
+	ld	bc, (ix - 112)
+	ld	l, c
+	ld	h, b
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB26_7
+	ld	(ix - 119), de
+	ld.sis	hl, 32
+	ld	(ix - 106), l
+	ld	(ix - 105), h
+	ld	e, h
+	ld	a, e
+BB26_3:
+	ld	(ix - 112), a
+	lea	de, iy
+	ld	e, c
+	ld	d, b
+	ld	hl, (ix + 30)
+	add	hl, de
+	ld	a, (hl)
+	cp	a, 96
+	jr	z, BB26_5
+	lea	de, iy
+	ld	l, (ix - 112)
+	ld	e, l
+	ld	iy, (ix - 116)
+	add	iy, de
+	ld	(iy), a
+	ld	a, l
+	ld	iy, 0
+	inc	a
+	inc.sis	bc
+	lea	de, iy
+	ld	e, c
+	ld	d, b
+	ld	hl, (ix - 119)
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB26_3
+	jr	BB26_6
+BB26_5:
+	ld	a, (ix - 112)
+BB26_6:
+	inc.sis	bc
+	ld	(ix - 112), bc
+	lea	de, iy
+	ld	e, a
+	ld	bc, -134
+	lea	hl, ix
+	add	hl, bc
+	ld	(hl), de
+	lea	hl, iy
+	ld	iy, (ix - 116)
+	add	iy, de
+	ld	(iy), 0
+	ld	a, (ix - 113)
+	inc	a
+	ld	(ix - 113), a
+	ld	l, a
+	ld	bc, -131
+	lea	iy, ix
+	add	iy, bc
+	ld	(iy), hl
+	ld	de, 3
+	push	de
+	pop	bc
+	call	__imulu
+	push	hl
+	ld	hl, (ix - 109)
+	push	hl
+	call	_realloc
+	ld	(ix - 109), hl
+	pop	de
+	pop	de
+	ld	iy, (ix - 128)
+	ld	(iy + 9), hl
+	ld	bc, -134
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	inc	hl
+	push	hl
+	call	_malloc
+	push	hl
+	pop	de
+	pop	hl
+	ld	bc, -131
+	lea	hl, ix
+	add	hl, bc
+	ld	hl, (hl)
+	dec	hl
+	ld	bc, 3
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	hl, (ix - 109)
+	add	hl, bc
+	ld	(hl), de
+	ld	hl, (ix - 116)
+	push	hl
+	push	de
+	call	_strcpy
+	pop	hl
+	pop	hl
+	ld	de, (ix - 119)
+	jp	BB26_1
+BB26_7:
+	ld	bc, 20
+	ld	hl, (ix - 125)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 122)
+	add	iy, de
+	ld	a, (ix - 113)
+	ld	(iy + 14), a
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_DeleteLastMenu
+_optix_DeleteLastMenu:
+	ld	hl, -9
+	call	__frameset
+	ld	a, (_optix_guidata+1)
+	ld	e, a
+	or	a, a
+	jp	z, BB27_5
+	ld	iy, (_optix_menu)
+	dec	e
+	ld	a, e
+	ld	(_optix_guidata+1), a
+	or	a, a
+	sbc	hl, hl
+	ld	l, e
+	ld	bc, 20
+	call	__imulu
+	push	hl
+	pop	de
+	add	iy, de
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 3), hl
+	ld	bc, 0
+	ld	(ix - 9), iy
+BB27_2:
+	ld	de, 0
+	ld	e, (iy + 14)
+	ld	iy, (iy + 9)
+	ld	(ix - 6), bc
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	jr	nc, BB27_4
+	ld	de, (ix - 3)
+	add	iy, de
+	ld	hl, (iy)
+	push	hl
+	call	_free
+	pop	hl
+	ld	bc, (ix - 6)
+	inc	bc
+	ld	de, 3
+	ld	hl, (ix - 3)
+	add	hl, de
+	ld	(ix - 3), hl
+	ld	iy, (ix - 9)
+	jr	BB27_2
+BB27_4:
+	push	iy
+	call	_free
+	pop	hl
+	ld	de, (_optix_menu)
+	ld	a, (_optix_guidata+1)
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 20
+	call	__imulu
+	push	hl
+	push	de
+	call	_realloc
+	pop	de
+	pop	de
+	ld	(_optix_menu), hl
+BB27_5:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_UpdateCurrMenu
+_optix_UpdateCurrMenu:
+	ld	hl, -17
+	call	__frameset
+	scf
+	sbc	hl, hl
+	ld	(ix - 9), hl
+	ld	hl, (_optix_menu)
+	ld	(ix - 3), hl
+	ld	a, (_optix_guidata)
+	ld	(ix - 6), a
+	call	_kb_Scan
+	call	_kb_AnyKey
+	or	a, a
+	jr	nz, BB28_2
+	ld	e, 1
+	ld	a, e
+	ld	(_optix_guidata+2), a
+	jr	BB28_3
+BB28_2:
+	ld	a, (_optix_guidata+2)
+	ld	e, a
+BB28_3:
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	c, (ix - 6)
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	a, l
+	bit	3, a
+	ld	iy, (ix - 3)
+	ld	(ix - 6), bc
+	jr	z, BB28_7
+	ld	a, e
+	or	a, a
+	jr	z, BB28_7
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	iy, (ix - 3)
+	add	iy, bc
+	ld	a, (iy + 6)
+	ld	iy, (ix - 3)
+	cp	a, 2
+	jr	c, BB28_7
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	de, 0
+	push	de
+	pop	hl
+	ld	l, (iy + 12)
+	ld	e, (iy + 5)
+	ld	iy, (ix - 3)
+	or	a, a
+	sbc	hl, de
+	ld	(ix - 9), hl
+	xor	a, a
+	ld	(_optix_guidata+2), a
+	ld	e, a
+BB28_7:
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 1
+	call	__sand
+	bit	0, l
+	jr	z, BB28_11
+	ld	a, e
+	or	a, a
+	jr	z, BB28_11
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	iy, (ix - 3)
+	add	iy, bc
+	ld	a, (iy + 6)
+	ld	iy, (ix - 3)
+	cp	a, 2
+	jr	c, BB28_11
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	add	iy, de
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	de
+	ld	e, (iy + 12)
+	ld	l, (iy + 5)
+	ld	iy, (ix - 3)
+	add	hl, de
+	ld	(ix - 9), hl
+	xor	a, a
+	ld	(_optix_guidata+2), a
+	ld	e, a
+BB28_11:
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	a, l
+	bit	1, a
+	jr	z, BB28_14
+	ld	a, e
+	or	a, a
+	jr	z, BB28_14
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	de, 0
+	push	de
+	pop	hl
+	ld	l, (iy + 12)
+	ld	e, (iy + 6)
+	ld	iy, (ix - 3)
+	or	a, a
+	sbc	hl, de
+	ld	(ix - 9), hl
+	xor	a, a
+	ld	(_optix_guidata+2), a
+	ld	e, a
+BB28_14:
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	a, l
+	bit	2, a
+	jr	z, BB28_17
+	ld	a, e
+	or	a, a
+	jr	z, BB28_17
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	add	iy, de
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	de
+	ld	e, (iy + 12)
+	ld	l, (iy + 6)
+	ld	iy, (ix - 3)
+	add	hl, de
+	ld	(ix - 9), hl
+	xor	a, a
+	ld	(_optix_guidata+2), a
+BB28_17:
+	ld	hl, -720868
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld.sis	bc, 1
+	call	__sand
+	bit	0, l
+	jr	nz, BB28_19
+	ld	hl, -720878
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	a, l
+	bit	5, a
+	jr	z, BB28_20
+BB28_19:
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	(iy + 15), 1
+	ld	iy, (ix - 3)
+BB28_20:
+	ld	de, 0
+	ld	bc, (ix - 9)
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	ld	hl, (ix - 6)
+	jp	m, BB28_23
+	push	bc
+	pop	de
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	de
+	pop	bc
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	de, 0
+	ld	e, (iy + 14)
+	ld	iy, (ix - 3)
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	ld	hl, (ix - 6)
+	jr	nc, BB28_23
+	ld	a, c
+	ld	bc, 20
+	ld	hl, (ix - 6)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	hl, (ix - 6)
+	ld	iy, (ix - 3)
+	add	iy, de
+	ld	(iy + 12), a
+	ld	iy, (ix - 3)
+BB28_23:
+	ld	bc, 20
+	call	__imulu
+	push	hl
+	pop	de
+	add	iy, de
+	ld	a, (iy + 12)
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	de
+	ld	(ix - 16), a
+	ld	e, a
+	ld	(ix - 12), de
+	ld	a, (iy + 16)
+	lea	de, iy
+	push	hl
+	pop	bc
+	ld	(ix - 6), a
+	ld	c, a
+	ld	(ix - 15), bc
+	ld	a, (iy + 5)
+	push	hl
+	pop	bc
+	ld	(ix - 9), a
+	ld	c, a
+	ld	(ix - 3), de
+	ld	a, (iy + 6)
+	ld	(ix - 17), a
+	ld	l, a
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	hl, (ix - 15)
+	dec	hl
+	add	hl, bc
+	ld	de, (ix - 12)
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB28_27
+	ld	l, (ix - 6)
+	ld	e, (ix - 9)
+	ld	a, e
+	cp	a, 1
+	jr	z, BB28_26
+	ld	a, (ix - 17)
+	cp	a, 1
+	jr	nz, BB28_31
+BB28_26:
+	inc	l
+	jr	BB28_34
+BB28_27:
+	ld	e, (ix - 9)
+	ld	a, (ix - 16)
+	ld	l, (ix - 6)
+	cp	a, l
+	jr	nc, BB28_35
+	ld	a, e
+	cp	a, 1
+	jr	z, BB28_30
+	ld	a, (ix - 17)
+	cp	a, 1
+	jr	nz, BB28_32
+BB28_30:
+	dec	l
+	jr	BB28_34
+BB28_31:
+	ld	a, e
+	add	a, l
+	jr	BB28_33
+BB28_32:
+	ld	a, l
+	sub	a, e
+BB28_33:
+	ld	l, a
+BB28_34:
+	ld	iy, (ix - 3)
+	ld	(iy + 16), l
+BB28_35:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_RenderMenu
+_optix_RenderMenu:
+	ld	hl, -28
+	call	__frameset
+	ld	iy, (_optix_menu)
+	ld	de, 0
+	push	de
+	pop	hl
+	ld	l, (ix + 6)
+	ld	bc, 20
+	call	__imulu
+	push	de
+	pop	bc
+	push	hl
+	pop	de
+	push	bc
+	pop	hl
+	add	iy, de
+	ld	a, (iy + 16)
+	ld	(ix - 7), a
+	ld	bc, 0
+	ld	(ix - 3), iy
+BB29_1:
+	push	hl
+	pop	de
+	ld	e, (iy + 6)
+	push	hl
+	pop	iy
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	jp	nc, BB29_13
+	ld	(ix - 10), bc
+	ld	bc, 0
+	ld	(ix - 6), bc
+	lea	hl, iy
+BB29_3:
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	ld	e, (iy + 5)
+	push	hl
+	pop	bc
+	ld	hl, (ix - 6)
+	or	a, a
+	sbc	hl, de
+	jp	nc, BB29_11
+	or	a, a
+	sbc	hl, hl
+	ld	c, (ix - 7)
+	ld	l, c
+	ld	(ix - 13), hl
+	ld	e, (iy + 12)
+	ld	a, (_optix_guidata)
+	ld	l, a
+	ld	a, c
+	cp	a, e
+	jp	nz, BB29_9
+	ld	a, l
+	ld	l, (ix + 6)
+	cp	a, l
+	jp	nz, BB29_9
+	ld	a, (iy + 15)
+	xor	a, 1
+	ld	e, a
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	ld	a, (_optix_guicolors+3)
+	ld	(ix - 16), e
+	bit	0, e
+	jr	nz, BB29_8
+	ld	l, a
+BB29_8:
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	l, (ix - 16)
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	de
+	ld	iy, (ix - 3)
+	ld	l, (iy + 7)
+	push	hl
+	pop	bc
+	ld	(ix - 19), bc
+	ld	hl, (ix - 6)
+	call	__imulu
+	ld	bc, (iy)
+	ld	(ix - 16), bc
+	ld	bc, (ix - 16)
+	ld	e, c
+	ld	d, b
+	add	hl, de
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	e, (iy + 3)
+	ld	(ix - 25), de
+	add	hl, de
+	ld	(ix - 16), hl
+	push	bc
+	pop	de
+	ld	c, (iy + 8)
+	ld	(ix - 22), bc
+	ld	hl, (ix - 10)
+	call	__imulu
+	push	de
+	pop	bc
+	ld	e, (iy + 2)
+	add	hl, de
+	push	bc
+	pop	de
+	ld	e, (iy + 4)
+	push	hl
+	pop	iy
+	add	iy, de
+	ld	hl, (ix - 25)
+	ld	bc, -2
+	call	__imulu
+	ld	bc, (ix - 19)
+	add	hl, bc
+	ld	(ix - 19), hl
+	ex	de, hl
+	ld	bc, -2
+	call	__imulu
+	ld	de, (ix - 22)
+	add	hl, de
+	push	hl
+	ld	hl, (ix - 19)
+	push	hl
+	push	iy
+	ld	hl, (ix - 16)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+8)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	bc
+	ld	iy, (ix - 3)
+	ld	c, (iy + 7)
+	ld	(ix - 19), bc
+	ld	hl, (ix - 6)
+	call	__imulu
+	ld	iy, (ix - 3)
+	ld	de, (iy)
+	ld	(ix - 16), de
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	bc, (ix - 16)
+	ld	e, c
+	ld	d, b
+	add	hl, de
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	e, (iy + 3)
+	ld	(ix - 25), de
+	add	hl, de
+	ld	(ix - 16), hl
+	push	bc
+	pop	de
+	ld	e, (iy + 8)
+	ld	(ix - 22), de
+	ld	hl, (ix - 10)
+	push	de
+	pop	bc
+	call	__imulu
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	e, (iy + 2)
+	add	hl, de
+	push	bc
+	pop	de
+	ld	e, (iy + 4)
+	add	hl, de
+	ld	(ix - 28), hl
+	ld	hl, (ix - 25)
+	ld	bc, -2
+	call	__imulu
+	push	hl
+	pop	iy
+	ld	bc, (ix - 19)
+	add	iy, bc
+	ex	de, hl
+	ld	bc, -2
+	call	__imulu
+	ld	de, (ix - 22)
+	add	hl, de
+	push	hl
+	push	iy
+	ld	hl, (ix - 28)
+	push	hl
+	ld	hl, (ix - 16)
+	push	hl
+	call	_gfx_Rectangle
+	ld	de, (ix - 3)
+	pop	hl
+	pop	hl
+	pop	hl
+	jr	BB29_10
+BB29_9:
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_optix_CusText
+	ld	de, (ix - 3)
+BB29_10:
+	pop	hl
+	ld	hl, (ix - 13)
+	push	de
+	pop	iy
+	ld	iy, (iy + 9)
+	ld	bc, 3
+	call	__imulu
+	push	hl
+	pop	bc
+	add	iy, bc
+	ld	hl, (iy)
+	ld	(ix - 13), hl
+	push	de
+	pop	iy
+	ld	hl, (iy)
+	ld	de, 0
+	push	de
+	pop	bc
+	ld	e, l
+	ld	d, h
+	ld	(ix - 16), de
+	ld	c, (iy + 7)
+	ld	hl, (ix - 6)
+	call	__imulu
+	ld	(ix - 19), hl
+	push	bc
+	pop	hl
+	ld	a, 1
+	ld	c, a
+	call	__ishru
+	ld	(ix - 22), hl
+	ld	hl, (ix - 13)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	bc, (ix - 16)
+	ld	hl, (ix - 22)
+	add	hl, bc
+	ld	bc, (ix - 19)
+	add	hl, bc
+	or	a, a
+	sbc	hl, de
+	ld	(ix - 16), hl
+	ld	bc, 0
+	push	bc
+	pop	hl
+	ld	iy, (ix - 3)
+	ld	l, (iy + 2)
+	ld	(ix - 19), hl
+	ld	iy, (ix - 3)
+	ld	c, (iy + 8)
+	ld	hl, (ix - 10)
+	push	bc
+	pop	de
+	call	__imulu
+	push	hl
+	pop	iy
+	ex	de, hl
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	bc
+	ld	de, -4
+	ld	hl, (ix - 19)
+	add	hl, de
+	lea	de, iy
+	add	hl, de
+	add	hl, bc
+	push	hl
+	ld	hl, (ix - 16)
+	push	hl
+	ld	hl, (ix - 13)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (ix - 7)
+	inc	a
+	ld	iy, (ix - 3)
+	ld	l, (iy + 14)
+	ld	de, (ix - 6)
+	inc	de
+	ld	(ix - 6), de
+	ld	(ix - 7), a
+	cp	a, l
+	ld	bc, 0
+	push	bc
+	pop	hl
+	jp	nz, BB29_3
+	jr	BB29_12
+BB29_11:
+	push	bc
+	pop	hl
+BB29_12:
+	ld	bc, (ix - 10)
+	inc	bc
+	ld	iy, (ix - 3)
+	jp	BB29_1
+BB29_13:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_InsertSpecialCharacter
+_optix_InsertSpecialCharacter:
+	ld	hl, -29
+	call	__frameset
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_gfx_Blit
+	ld.sis	bc, 1
+	ld	iy, -720868
+	pop	hl
+	xor	a, a
+	ld	l, a
+	ld	(ix - 3), hl
+	ld	e, a
+BB30_1:
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	call	__sand
+	bit	0, l
+	jp	nz, BB30_34
+	ld	(ix - 6), a
+	ld	hl, -720878
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	a, l
+	bit	5, a
+	jp	nz, BB30_33
+	ld	(ix - 9), e
+	ld	a, (_optix_guicolors)
+	ld	l, a
+	push	hl
+	call	_gfx_FillScreen
+	pop	hl
+	call	_kb_Scan
+	ld	c, -1
+	ld	hl, -720866
+	push	de
+	ld	e, (hl)
+	inc	hl
+	ld	d, (hl)
+	ld	l, e
+	ld	h, d
+	pop	de
+	ld	e, l
+	ld	d, (ix - 18)
+	ld	a, d
+	and	a, 1
+	xor	a, 1
+	ld	l, a
+	bit	3, e
+	ld	a, c
+	jr	z, BB30_5
+	ld	a, 0
+BB30_5:
+	or	a, l
+	ld	l, a
+	ld	h, (ix - 6)
+	ld	a, h
+	or	a, a
+	ld	e, c
+	jr	z, BB30_7
+	ld	e, 0
+BB30_7:
+	ld	a, l
+	or	a, e
+	ld	l, a
+	xor	a, 1
+	ld	b, 7
+	call	__bshl
+	rlc	a
+	sbc	a, a
+	ld	e, a
+	ld	a, h
+	add	a, e
+	ld	e, a
+	bit	0, l
+	jr	nz, BB30_9
+	ld	d, 0
+BB30_9:
+	ld	iy, -720866
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld.sis	bc, 1
+	call	__sand
+	ld	a, d
+	and	a, c
+	ld	c, a
+	ld	a, l
+	and	a, c
+	ld	l, a
+	ld	a, e
+	cp	a, 7
+	sbc	a, a
+	ld	c, a
+	ld	a, l
+	and	a, c
+	ld	l, a
+	and	a, 1
+	ld	c, a
+	ld	a, e
+	add	a, c
+	ld	(ix - 6), a
+	bit	0, l
+	ld	l, b
+	jr	nz, BB30_11
+	ld	l, d
+BB30_11:
+	ld	e, (iy)
+	ld	d, (iy + 1)
+	ld	c, e
+	ld	a, l
+	and	a, 1
+	xor	a, 1
+	ld	e, a
+	bit	1, c
+	ld	d, -1
+	ld	a, d
+	jr	z, BB30_13
+	ld	a, 0
+BB30_13:
+	or	a, e
+	ld	e, a
+	ld	h, (ix - 9)
+	ld	a, h
+	or	a, a
+	ld	c, d
+	jr	z, BB30_15
+	ld	c, 0
+BB30_15:
+	ld	a, e
+	or	a, c
+	ld	c, a
+	xor	a, 1
+	ld	b, 7
+	call	__bshl
+	rlc	a
+	sbc	a, a
+	ld	e, a
+	ld	a, h
+	add	a, e
+	ld	e, a
+	bit	0, c
+	jr	nz, BB30_17
+	ld	l, 0
+BB30_17:
+	ld	c, (iy)
+	ld	b, (iy + 1)
+	ld	h, c
+	ld	a, l
+	and	a, 1
+	ld	c, a
+	bit	2, h
+	ld	a, d
+	jr	nz, BB30_19
+	ld	a, 0
+BB30_19:
+	and	a, c
+	ld	c, a
+	ld	a, e
+	cp	a, 15
+	sbc	a, a
+	ld	h, a
+	ld	a, c
+	and	a, h
+	ld	c, a
+	and	a, 1
+	ld	h, a
+	ld	a, e
+	add	a, h
+	ld	e, a
+	bit	0, c
+	ld	c, 0
+	ld	iy, -720868
+	jr	nz, BB30_21
+	ld	c, l
+BB30_21:
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	ld	a, c
+	and	a, 1
+	bit	6, l
+	jr	z, BB30_23
+	bit	0, a
+	jp	nz, BB30_32
+BB30_23:
+	ld	(ix - 29), c
+	ld	(ix - 9), e
+	call	_kb_AnyKey
+	ld	(ix - 18), a
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, 86
+	push	hl
+	ld	hl, 166
+	push	hl
+	ld	hl, 83
+	push	hl
+	ld	hl, 77
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, 86
+	push	hl
+	ld	hl, 166
+	push	hl
+	ld	hl, 83
+	push	hl
+	ld	hl, 77
+	push	hl
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	ld	l, (ix - 9)
+	ld	bc, 10
+	call	__imulu
+	ld	(ix - 12), hl
+	push	hl
+	pop	iy
+	ld	de, 79
+	add	iy, de
+	or	a, a
+	sbc	hl, hl
+	ld	l, (ix - 6)
+	call	__imulu
+	ld	(ix - 15), hl
+	ld	de, 85
+	add	hl, de
+	ld	de, 12
+	push	de
+	push	de
+	push	hl
+	push	iy
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 12
+	push	hl
+	ld	hl, 166
+	push	hl
+	ld	hl, 71
+	push	hl
+	ld	hl, 77
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	xor	a, a
+	ld	iy, 0
+BB30_24:
+	ld	e, 1
+	lea	hl, iy
+	ld	bc, 8
+	or	a, a
+	sbc	hl, bc
+	jr	z, BB30_29
+	lea	hl, iy
+	ld	bc, 10
+	call	__imulu
+	ld	de, 87
+	add	hl, de
+	ld	(ix - 25), hl
+	ld	hl, 81
+	ld	e, a
+	ld	(ix - 3), de
+BB30_26:
+	ld	de, 241
+	push	hl
+	pop	bc
+	or	a, a
+	sbc	hl, de
+	jr	z, BB30_28
+	ld	hl, (ix - 25)
+	push	hl
+	ld	(ix - 28), bc
+	push	bc
+	ld	(ix - 21), iy
+	ld	(ix - 22), a
+	call	_gfx_SetTextXY
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 3)
+	push	hl
+	call	_gfx_PrintChar
+	ld	a, (ix - 22)
+	ld	iy, (ix - 21)
+	pop	hl
+	ld	hl, (ix - 28)
+	ld	de, (ix - 3)
+	inc	e
+	ld	(ix - 3), de
+	ld	de, 10
+	add	hl, de
+	jr	BB30_26
+BB30_28:
+	inc	iy
+	add	a, 16
+	jr	BB30_24
+BB30_29:
+	ld	a, (ix - 18)
+	or	a, a
+	ld	a, e
+	jr	z, BB30_31
+	ld	a, (ix - 29)
+BB30_31:
+	ld	(ix - 18), a
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	iy, (ix - 12)
+	ld	de, 80
+	add	iy, de
+	ld	hl, (ix - 15)
+	ld	de, 86
+	add	hl, de
+	ld	de, 10
+	push	de
+	push	de
+	push	hl
+	push	iy
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	ld	hl, _.str.4
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, 160
+	or	a, a
+	sbc	hl, de
+	ld	de, 74
+	push	de
+	push	hl
+	ld	hl, _.str.4
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	de, 81
+	ld	iy, (ix - 12)
+	add	iy, de
+	ld	de, 87
+	ld	hl, (ix - 15)
+	add	hl, de
+	push	hl
+	push	iy
+	call	_gfx_SetTextXY
+	pop	hl
+	pop	hl
+	ld	a, (ix - 6)
+	ld	b, 4
+	call	__bshl
+	ld	l, a
+	ld	a, (ix - 9)
+	add	a, l
+	ld	l, a
+	ld	(ix - 3), hl
+	push	hl
+	call	_gfx_PrintChar
+	pop	hl
+	call	_gfx_SwapDraw
+	ld	a, (ix - 6)
+	ld	e, (ix - 9)
+	ld	iy, -720868
+	ld.sis	bc, 1
+	jp	BB30_1
+BB30_32:
+	xor	a, a
+	ld	l, a
+	ld	(ix - 3), hl
+BB30_33:
+	ld	a, (ix - 6)
+BB30_34:
+	ld	(ix - 9), e
+	ld	iy, 0
+	ld	iyl, e
+	lea	hl, iy
+	ld	bc, 10
+	call	__imulu
+	ld	(ix - 6), hl
+	ld	de, 80
+	add	hl, de
+	ld	(ix - 12), hl
+	ld	iyl, a
+	lea	hl, iy
+	call	__imulu
+	push	hl
+	pop	iy
+	ld	de, 86
+	add	iy, de
+	ld	(ix - 18), iy
+	ld	de, 81
+	ld	iy, (ix - 6)
+	add	iy, de
+	ld	(ix - 6), iy
+	ld	de, 87
+	add	hl, de
+	ld	(ix - 15), hl
+	ld	b, 4
+	call	__bshl
+	add	a, (ix - 9)
+	ld	l, a
+	ld	(ix - 9), hl
+	ld.sis	bc, 1
+	ld	iy, -720868
+	ld	de, (ix - 3)
+BB30_35:
+	ld	l, (iy)
+	ld	h, (iy + 1)
+	call	__sand
+	bit	0, l
+	jp	z, BB30_37
+	call	_kb_Scan
+	ld	a, (_optix_guicolors+3)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, 10
+	push	hl
+	push	hl
+	ld	hl, (ix - 18)
+	push	hl
+	ld	hl, (ix - 12)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	ld	hl, (ix - 15)
+	push	hl
+	ld	hl, (ix - 6)
+	push	hl
+	call	_gfx_SetTextXY
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 9)
+	push	hl
+	call	_gfx_PrintChar
+	pop	hl
+	call	_gfx_SwapDraw
+	ld.sis	bc, 1
+	ld	iy, -720868
+	ld	de, (ix - 9)
+	jp	BB30_35
+BB30_37:
+	ld	a, e
+	cp	a, 96
+	jr	z, BB30_39
+	ld	a, e
+	cp	a, 126
+	jr	nz, BB30_40
+BB30_39:
+	ld	hl, 10
+	ex	de, hl
+	push	de
+	ld	hl, 150
+	push	hl
+	push	de
+	ld	hl, _.str.6
+	push	hl
+	ld	hl, _.str.5
+	push	hl
+	call	_optix_Message
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	xor	a, a
+	ld	e, a
+BB30_40:
+	ld	(ix - 3), de
+	ld	hl, 1
+	push	hl
+	call	_gfx_Blit
+	pop	hl
+	ld	hl, (ix - 3)
+	ld	a, l
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_GetStringInput
+_optix_GetStringInput:
+	ld	hl, -81
+	call	__frameset
+	ld	iy, (ix + 15)
+	ld.sis	de, 0
+	lea	hl, ix - 22
+	ld	(ix - 2), e
+	ld	(ix - 1), d
+	ld	(ix - 22), d
+	push	hl
+	pop	de
+	inc	de
+	ld	bc, 19
+	ld	(ix - 35), hl
+	ldir
+	ld	hl, (_optix_stringinput)
+	lea	de, iy
+	inc	de
+	push	de
+	push	hl
+	call	_realloc
+	pop	de
+	pop	de
+	ld	(_optix_stringinput), hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB31_2
+	ld	hl, 0
+	jp	BB31_40
+BB31_2:
+	ld	de, (ix + 12)
+	ld	iy, _.str.7
+	ld	c, 1
+	ld	(ix - 44), bc
+	lea	bc, ix - 2
+	ld	(ix - 50), bc
+	ld	bc, (ix + 15)
+	add	hl, bc
+	ld	(hl), 0
+	push	de
+	push	iy
+	call	_optix_WordWrap
+	pop	hl
+	pop	hl
+	ld	bc, 0
+	push	bc
+	pop	de
+	ld	hl, (ix + 12)
+	ld	e, l
+	ld	d, h
+	ld	(ix - 38), de
+	ex	de, hl
+	ld	de, 6
+	add	hl, de
+	ld	(ix - 31), hl
+	ld	c, (ix + 9)
+	ld	(ix - 60), bc
+	push	bc
+	pop	hl
+	ld	de, 18
+	add	hl, de
+	ld	(ix - 25), hl
+BB31_3:
+	call	_kb_AnyKey
+	or	a, a
+	jr	z, BB31_5
+	call	_kb_Scan
+	jr	BB31_3
+BB31_5:
+	ld	c, 1
+	ld	hl, (ix - 31)
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, (ix - 25)
+	call	__ishru
+	push	hl
+	pop	bc
+	ld	(ix - 25), bc
+	ld	hl, 160
+	or	a, a
+	sbc	hl, de
+	push	hl
+	pop	de
+	ld	hl, 120
+	or	a, a
+	sbc	hl, bc
+	push	hl
+	pop	iy
+	ex	de, hl
+	ld	bc, 255
+	call	__iand
+	ld	(ix - 28), hl
+	lea	hl, iy
+	call	__iand
+	push	hl
+	pop	bc
+	push	bc
+	pop	iy
+	ld	de, 12
+	add	iy, de
+	ld	(ix - 53), iy
+	ld	iy, (ix - 28)
+	lea	hl, iy
+	ld	de, 4
+	add	hl, de
+	ld	(ix - 75), hl
+	push	bc
+	pop	hl
+	ld	de, 14
+	add	hl, de
+	ld	(ix - 78), hl
+	lea	hl, iy
+	ld	de, 5
+	add	hl, de
+	ld	(ix - 81), hl
+	ld	(ix - 63), bc
+	push	bc
+	pop	hl
+	ld	bc, 3
+	add	hl, bc
+	ld	(ix - 41), hl
+	inc	de
+	add	iy, de
+	ld	(ix - 56), iy
+	ld	hl, (ix - 38)
+	add	hl, bc
+	ld	de, (ix - 28)
+	add	hl, de
+	ld	(ix - 38), hl
+	ld	a, -120
+	ld	hl, (ix - 25)
+	sub	a, l
+	ld	l, a
+	ld	(ix - 66), hl
+	ld	l, (ix + 9)
+	ld	(ix - 69), hl
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 25), hl
+	xor	a, a
+	ld	(ix - 32), a
+	ld	(ix - 57), a
+BB31_6:
+	call	_os_GetCSC
+	ld	e, a
+	cp	a, 9
+	jp	z, BB31_37
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	pop	iy
+	ld	iyl, e
+	ld	l, (ix - 32)
+	ld	bc, 3
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	hl, ___const.optix_GetStringInput.keys
+	add	hl, bc
+	ld	hl, (hl)
+	lea	bc, iy
+	add	hl, bc
+	ld	d, (hl)
+	ld	a, d
+	or	a, a
+	ld	(ix - 47), e
+	jr	z, BB31_10
+	ld	hl, (ix - 25)
+	ld	bc, (ix + 15)
+	or	a, a
+	sbc	hl, bc
+	call	pe, __setflag
+	jp	p, BB31_10
+	ld	hl, (_optix_stringinput)
+	ld	bc, (ix - 25)
+	add	hl, bc
+	inc	bc
+	ld	(ix - 25), bc
+	ld	(hl), d
+	ld	hl, (_optix_stringinput)
+	ld	de, (ix + 12)
+	push	de
+	push	hl
+	call	_optix_WordWrap
+	ld	l, a
+	ld	(ix - 44), hl
+	pop	hl
+	pop	hl
+	xor	a, a
+	ld	iyh, a
+	jr	BB31_11
+BB31_10:
+	push	af
+	ld	a, (ix - 57)
+	ld	iyh, a
+	pop	af
+BB31_11:
+	ld	bc, (ix - 25)
+	ld	a, (ix - 47)
+	cp	a, 56
+	push	af
+	ld	a, iyh
+	ld	(ix - 57), a
+	pop	af
+	jr	nz, BB31_14
+	push	bc
+	pop	hl
+	ld	de, 1
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	m, BB31_14
+	ld	iy, (_optix_stringinput)
+	add	iy, bc
+	dec	bc
+	ld	(ix - 25), bc
+	ld	(iy - 1), 0
+	jr	BB31_19
+BB31_14:
+	ld	a, (ix - 47)
+	cp	a, 15
+	jr	nz, BB31_16
+	ld	hl, (_optix_stringinput)
+	ld.sis	de, 32
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	ld	hl, (_optix_wordwraptext)
+	ld	(hl), e
+	inc	hl
+	ld	(hl), d
+	or	a, a
+	sbc	hl, hl
+	ld	(ix - 25), hl
+	jr	BB31_19
+BB31_16:
+	cp	a, 10
+	ld	de, (ix + 15)
+	ld	(ix - 25), bc
+	jr	nz, BB31_20
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	call	pe, __setflag
+	jp	p, BB31_20
+	call	_optix_InsertSpecialCharacter
+	ld	hl, (_optix_stringinput)
+	ld	de, (ix - 25)
+	add	hl, de
+	inc	de
+	ld	(ix - 25), de
+	ld	(hl), a
+BB31_19:
+	ld	hl, (_optix_stringinput)
+	ld	de, (ix + 12)
+	push	de
+	push	hl
+	call	_optix_WordWrap
+	ld	l, a
+	ld	(ix - 44), hl
+	pop	hl
+	pop	hl
+	ld	e, (ix - 32)
+	ld	a, (ix - 47)
+	jr	BB31_21
+BB31_20:
+	ld	a, (ix - 47)
+	ld	e, (ix - 32)
+BB31_21:
+	cp	a, 48
+	ld	l, 1
+	jr	z, BB31_23
+	ld	l, 0
+BB31_23:
+	ld	a, e
+	add	a, l
+	cp	a, 3
+	ld	l, 0
+	ld	de, (ix - 25)
+	jr	nc, BB31_25
+	ld	l, a
+BB31_25:
+	ld	(ix - 32), l
+	ld	iy, (_optix_stringinput)
+	add	iy, de
+	ld	(iy + 1), 0
+	ld	a, (_optix_guicolors+1)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	de, 0
+	ld	hl, (ix - 44)
+	ld	e, l
+	ld	(ix - 47), de
+	ex	de, hl
+	ld	bc, (ix - 60)
+	call	__imulu
+	ld	de, 6
+	add	hl, de
+	ld	(ix - 72), hl
+	push	hl
+	ld	hl, (ix - 31)
+	push	hl
+	ld	hl, (ix - 53)
+	push	hl
+	ld	hl, (ix - 28)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	a, (_optix_guicolors+2)
+	ld	l, a
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	hl, (ix - 72)
+	push	hl
+	ld	hl, (ix - 31)
+	push	hl
+	ld	hl, (ix - 53)
+	push	hl
+	ld	hl, (ix - 28)
+	push	hl
+	call	_gfx_Rectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 12
+	push	hl
+	ld	hl, (ix - 31)
+	push	hl
+	ld	hl, (ix - 63)
+	push	hl
+	ld	hl, (ix - 28)
+	push	hl
+	call	_gfx_FillRectangle
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	e, (ix - 57)
+	ld	a, e
+	cp	a, 10
+	jr	nc, BB31_27
+	ld	iy, (_optix_wordwraptext)
+	ld	hl, (ix - 47)
+	dec	hl
+	ld	(ix - 47), hl
+	ld	bc, 201
+	call	__imulu
+	push	hl
+	pop	de
+	ld	(ix - 72), de
+	add	iy, de
+	push	iy
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	iy, (ix - 75)
+	add	iy, de
+	ld	hl, (ix - 47)
+	ld	bc, (ix - 60)
+	call	__imulu
+	push	hl
+	pop	de
+	ld	hl, (ix - 78)
+	add	hl, de
+	ex	de, hl
+	ld	(ix - 47), de
+	ld	hl, 11
+	push	hl
+	push	de
+	push	iy
+	call	_gfx_VertLine
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (_optix_wordwraptext)
+	ld	de, (ix - 72)
+	add	hl, de
+	push	hl
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	hl, (ix - 81)
+	add	hl, de
+	ld	de, 11
+	push	de
+	ld	de, (ix - 47)
+	push	de
+	push	hl
+	call	_gfx_VertLine
+	ld	e, (ix - 57)
+	pop	hl
+	pop	hl
+	pop	hl
+BB31_27:
+	inc	e
+	ld	a, e
+	cp	a, 21
+	ld	a, 0
+	jr	nc, BB31_29
+	ld	a, e
+BB31_29:
+	ld	(ix - 57), a
+	ld	hl, 1
+	push	hl
+	call	_optix_CusText
+	pop	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_GetStringWidth
+	pop	de
+	ld	c, 1
+	call	__ishru
+	push	hl
+	pop	de
+	ld	hl, 160
+	or	a, a
+	sbc	hl, de
+	ld	de, (ix - 41)
+	push	de
+	push	hl
+	ld	hl, (ix + 6)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix + 15)
+	push	hl
+	ld	hl, (ix - 25)
+	push	hl
+	ld	hl, _.str.10
+	push	hl
+	ld	hl, (ix - 35)
+	push	hl
+	call	_sprintf
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	l, (ix - 32)
+	ld	a, l
+	or	a, a
+	jr	nz, BB31_31
+	ld	(ix - 2), 65
+	jr	BB31_36
+BB31_31:
+	ld	a, l
+	cp	a, 1
+	jr	nz, BB31_33
+	ld	(ix - 2), 97
+	jr	BB31_36
+BB31_33:
+	ld	a, l
+	cp	a, 2
+	jr	nz, BB31_35
+	ld	(ix - 2), 49
+	jr	BB31_36
+BB31_35:
+	ld	(ix - 2), 63
+BB31_36:
+	ld	hl, (ix - 41)
+	push	hl
+	ld	hl, (ix - 56)
+	push	hl
+	ld	hl, (ix - 35)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 50)
+	push	hl
+	call	_gfx_GetStringWidth
+	push	hl
+	pop	de
+	pop	hl
+	ld	hl, (ix - 38)
+	or	a, a
+	sbc	hl, de
+	ld	de, (ix - 41)
+	push	de
+	push	hl
+	ld	hl, (ix - 50)
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, (ix - 44)
+	push	hl
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	ld	hl, (ix - 69)
+	push	hl
+	ld	hl, (ix - 66)
+	push	hl
+	ld	hl, (ix - 56)
+	push	hl
+	ld	hl, (ix + 12)
+	push	hl
+	call	_optix_PrintWordWrap
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	call	_gfx_SwapDraw
+	jp	BB31_6
+BB31_37:
+	call	_kb_AnyKey
+	or	a, a
+	jr	z, BB31_39
+	call	_kb_Scan
+	jr	BB31_37
+BB31_39:
+	ld	hl, (_optix_stringinput)
+BB31_40:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_InitializeButtons
+_optix_InitializeButtons:
+	or	a, a
+	sbc	hl, hl
+	push	hl
+	call	_malloc
+	pop	de
+	ld	(_optix_button), hl
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_AddButton
+_optix_AddButton:
+	ld	hl, -4
+	call	__frameset
+	ld	bc, 28
+	ld	de, (_optix_button)
+	ld	a, (_optix_buttoninfo)
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	call	__imulu
+	add	hl, bc
+	push	hl
+	push	de
+	call	_realloc
+	pop	de
+	pop	de
+	ld	(_optix_button), hl
+	add	hl, bc
+	or	a, a
+	sbc	hl, bc
+	jr	nz, BB33_2
+	ld	hl, _.str.11
+	ld	de, _.str.12
+	ld	bc, 3
+	push	bc
+	ld	bc, 150
+	push	bc
+	ld	bc, 10
+	push	bc
+	push	de
+	push	hl
+	call	_optix_Message
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	jr	BB33_3
+BB33_2:
+	push	hl
+	pop	iy
+	ld	a, (_optix_buttoninfo)
+	ld	(ix - 1), a
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 28
+	call	__imulu
+	push	hl
+	pop	bc
+	add	iy, bc
+	ld	(ix - 4), iy
+	ld	hl, (ix + 6)
+	ld	(iy), l
+	ld	(iy + 1), h
+	ld	a, (ix + 9)
+	ld	(iy + 2), a
+	ld	hl, (ix + 12)
+	ld	(iy + 3), l
+	ld	(iy + 4), h
+	ld	a, (ix + 15)
+	ld	(iy + 5), a
+	ld	hl, (ix + 18)
+	push	hl
+	pea	iy + 6
+	call	_strcpy
+	pop	hl
+	pop	hl
+	ld	hl, (ix + 21)
+	ld	iy, (ix - 4)
+	ld	(iy + 21), hl
+	ld	hl, (ix + 24)
+	ld	(iy + 24), hl
+	ld	a, (ix + 27)
+	ld	(iy + 27), a
+	ld	a, (ix - 1)
+	inc	a
+	ld	(_optix_buttoninfo), a
+BB33_3:
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.text,"ax",@progbits
+	public	_optix_DeleteButton
+_optix_DeleteButton:
+	ld	hl, -12
+	call	__frameset
+	ld	bc, 28
+	ld	a, (_optix_buttoninfo)
+	ld	de, (_optix_button)
+	ld	iy, 0
+	lea	hl, iy
+	ld	l, a
+	push	af
+	ld	a, (ix + 6)
+	ld	iyl, a
+	pop	af
+	ld	(ix - 3), hl
+	call	__imulu
+	push	hl
+	pop	bc
+	ld	(ix - 9), de
+	ex	de, hl
+	add	hl, bc
+BB34_1:
+	ld	(ix - 6), hl
+	lea	hl, iy
+	ld	de, (ix - 3)
+	or	a, a
+	sbc	hl, de
+	lea	bc, iy
+	jr	nc, BB34_3
+	dec	de
+	ld	(ix - 3), de
+	ld	hl, (ix - 6)
+	push	hl
+	pop	iy
+	lea	de, iy - 28
+	ld	(ix - 12), de
+	push	bc
+	pop	iy
+	ld	bc, 28
+	ldir
+	ld	hl, (ix - 12)
+	jr	BB34_1
+BB34_3:
+	dec	a
+	ld	(_optix_buttoninfo), a
+	or	a, a
+	sbc	hl, hl
+	ld	l, a
+	ld	bc, 28
+	call	__imulu
+	push	hl
+	ld	hl, (ix - 9)
+	push	hl
+	call	_realloc
+	pop	de
+	pop	de
+	ld	(_optix_button), hl
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
 	section	.data,"aw",@progbits
 	public	_global_palette
 _global_palette:
-	db	"|ÿÿ¸)¸)¸)¸©¸©¸©¸­¸­¸­Ø-Ø-Ø-Ø­Ø1Ø±Ø±Ø±Ù±Ù±Ù±ø1ø1ø1ù1ù1ù1ø5øµùµùµùµ666:::ººº9:9>9¾9ÂZBZÂZÆzFzÆzÊšJšÊšÎºN»NºR»R»ÒÛVÛÖûVûZûÚ[[_ß<c<ã<ç\g\ç\ë]ë|k}k}ïoïó½s½w½÷¾÷ÞwÞ{"
+	db	"èÿÿ", 0, 0, 0, 0, "¸)¸©¸­Ø-Ø­Ø1Ø±Ù±ø1ù1ø5øµùµ6:º9:9>9¾9ÂZBZÂZÆzFzÆzÊšJšÊšÎºN»NºR»R»ÒÛVÛÖûVûZûÚ[[_ß<c<ã<ç\g\ç\ë]ë|k}k}ïoïó½s½w½÷¾÷ÞwÞ{"
 
 	section	.data,"aw",@progbits
 	public	_pfp_data
 _pfp_data:
-	db	"  (&&&&&&""""""      ", 13, 13, 13, "&&&&""""""""""       ", 13, 13, 13, "&&&""""""""""""       ", 13, 13, 13, "%""""""""""""""       ", 13, 13, 13, """""""""""""""""       ", 13, 13, 13, """"""""""""""" &4FE/ /HE3 ", 13, 13, 13, 13, """""""""""""%>RA.4BKOQQOKB11IT>", 13, 13, 13, 13, """"""""" +QJ@OVWWWWWWWWWWVK?QQ(", 13, 13, 13, 13, """    DTTWWWWWWWWWWWWWWWWSVH", 13, 13, 13, 13, 13, "    (TWWWWWWWWWWWWWWWWWWWWV%", 13, 13, 13, 13, "    ;WWWWWWWWWWWWWWWWWWWWVV>", 13, 13, 13, 13, "    NWWWWWWWWWWWWWWWWWWWWVVQ", 13, 13, 13, "   *VWWWWWWWWWWWWWWWWWWWVVVV*", 13, 13, "	   7WWWWWWVNQWWWWWWQNVWWVVVV<", 13, 13, "	   GWWWWWT+@WWWW=", 13, "	+TVVVVVL", 13, "		 QWWWWW=TWWR", 13, "@VVVVVS", 13, "	", 13, """VWWWWW6QWWO7VVVVVV ", 13, "	,WWWWWWH+VWWV(IVVVVVV,		1WWWWWWWC+1QWWWWO/*DVVVVVVV3		6WWWWVWWWWWWWWWWWVVVVVVVVVV7	8WWWWHGVWWWWWWWWVVVVVJ@VVVV;%RWWWWG+<OVWWWVVVVQ@+?VVVVR&OWWWWTD", 13, "+3994-	>SVVVVO;QWWW6", 13, 13, 13, "		", 13, 13, 13, 13, "1VVVQ9", 10, "", 13, 13, "&34", 13, "", 13, 13, 13, 13, 13, 13, 13, 13, 10, "00", 13, 13, 13, "", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "				", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "	", 13, "			", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "		", 13, "		", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "	", 13, 13, "		", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "		", 13, 10, 10, 10, 10, 10, 10, 10, ""
+	db	"  ", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", 13, 13, 13, 13, 13, "", 10, 10, 10, 10, "", 13, 13, 13, 13, 13, 13, "", 10, "", 10, 10, 10, "", 13, 13, 13, 13, 13, 13, "", 10, 10, 10, "", 13, 13, 13, 13, 13, 13, 13, 10, "", 10, 10, 10, "", 13, 13, 13, 13, 13, 13, "", 10, 10, 10, "0/", 13, 13, 13, 13, 13, "2/", 10, 10, 10, 10, "(<+,59;;95,3>(", 13, ";4*9@AAAAAAAAAA@5);;.>>AAAAAAAAAAAAAAAA=@2>AAAAAAAAAAAAAAAAAAAA@%AAAAAAAAAAAAAAAAAAAA@@(8AAAAAAAAAAAAAAAAAAAA@@;@AAAAAAAAAAAAAAAAAAA@@@@!AAAAAA@8;AAAAAA;8@AA@@@@&1AAAAA>	", 10, "*AAAA'>@@@@@6", 13, 13, ";AAAAA'", 10, 13, "", 13, ">AA<", 10, 10, 10, "*@@@@@=", 13, 13, "@AAAAA ", 13, 13, 13, 10, ";AA9", 10, 10, 10, 10, "!@@@@@@", 13, 13, "AAAAAA2", 13, "@AA@", 10, "", 10, "3@@@@@@", 13, 13, "AAAAAAA-;AAAA9.@@@@@@@", 13, 13, " AAAA@AAAAAAAAAAA@@@@@@@@@@!""AAAA21@AAAAAAAA@@@@@4*@@@@%<AAAA1&9@AAA@@@@;*)@@@@<", 10, 10, "9AAAA>.##(=@@@@9", 10, 10, 10, "%;AAA 	@@@;#", 10, 10, 10, 10, 10, "", 10, "", 26, 26, "", 10, 10, 10, 10, 10, 10, "	", 10, ""
+	db	32 dup 0
 
 	section	.rodata,"a",@progbits
 	private	_.str
 _.str:
 	db	"CLIPPED TXTEEEE", 0
 
+	section	.rodata,"a",@progbits
+	private	_.str.1
+_.str.1:
+	db	"Hi", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.2
+_.str.2:
+	db	"hi guys", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.3
+_.str.3:
+	db	"Message", 0
+
+	section	.bss,"aw",@nobits
+	public	_optix_guidata
+_optix_guidata:
+	rb	12
+
+	section	.bss,"aw",@nobits
+	public	_optix_guicolors
+_optix_guicolors:
+	rb	9
+
+	section	.bss,"aw",@nobits
+	public	_optix_cursor
+_optix_cursor:
+	rb	4
+
+	section	.bss,"aw",@nobits
+	public	_optix_guisettings
+_optix_guisettings:
+	rb	3
+
+	section	.bss,"aw",@nobits
+	public	_optix_buttoninfo
+_optix_buttoninfo:
+	rb	2
+
+	section	.rodata,"a",@progbits
+	private	_.str.7
+_.str.7:
+	db	1 dup 0
+
+	section	.bss,"aw",@nobits
+	public	_optix_wordwraptext
+_optix_wordwraptext:
+	rb	3
+
+	section	.bss,"aw",@nobits
+	public	_optix_menu
+_optix_menu:
+	rb	3
+
+	section	.rodata,"a",@progbits
+	private	_.str.4
+_.str.4:
+	db	"Special characters", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.5
+_.str.5:
+	db	"ERROR", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.6
+_.str.6:
+	db	"You attempted to use a character reserved by OPTIX. Nice try, bucko.", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.7.8
+_.str.7.8:
+	db	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "WRMH", 0, 0, "?", 0, "VQLG", 0, 0, ".ZUPKFC", 0, " YTOJEB", 0, 0, "XSNIDA", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.8
+_.str.8:
+	db	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "wrmh", 0, 0, "?", 0, "vqlg", 0, 0, ".zupkfc", 0, " ytojeb", 0, 0, "xsnida", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.9
+_.str.9:
+	db	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "-369)", 0, 0, 0, ".258(", 0, 0, 0, "0147,", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+
+	section	.rodata,"a",@progbits
+	private	___const.optix_GetStringInput.keys
+___const.optix_GetStringInput.keys:
+	dl	_.str.7.8
+	dl	_.str.8
+	dl	_.str.9
+
+	section	.bss,"aw",@nobits
+	public	_optix_stringinput
+_optix_stringinput:
+	rb	3
+
+	section	.rodata,"a",@progbits
+	private	_.str.10
+_.str.10:
+	db	"%d/%d", 0
+
+	section	.bss,"aw",@nobits
+	public	_optix_button
+_optix_button:
+	rb	3
+
+	section	.rodata,"a",@progbits
+	private	_.str.11
+_.str.11:
+	db	"ERROR 01", 0
+
+	section	.rodata,"a",@progbits
+	private	_.str.12
+_.str.12:
+	db	"Failed to reallocate space in the dynamic array for a new button. Please submit a bug report!", 0
+
+	section	.bss,"aw",@nobits
+	public	_optix_box
+_optix_box:
+	rb	6
+
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
 	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
 	extern	_gfx_SetTextTransparentColor
-	extern	_gfx_FillScreen
 	extern	__Unwind_SjLj_Register
+	extern	_gfx_PrintChar
+	extern	_malloc
+	extern	_gfx_SetPalette
+	extern	__idivs
+	extern	__idivu
 	extern	_gfx_Blit
-	extern	__frameset
-	extern	__Unwind_SjLj_Unregister
-	extern	_gfx_SetTextBGColor
-	extern	_gfx_FillRectangle
+	extern	_gfx_Circle
+	extern	__ixor
+	extern	_gfx_Sprite
+	extern	_realloc
+	extern	_free
+	extern	_sprintf
+	extern	__indcallhl
+	extern	__ishru
+	extern	_gfx_FillScreen
+	extern	__sdivs
+	extern	_strcpy
+	extern	__imulu
+	extern	_gfx_Rectangle
+	extern	_gfx_End
+	extern	_gfx_SetTextXY
+	extern	__frameset0
 	extern	_gfx_SetTextFGColor
 	extern	_gfx_Begin
-	extern	_gfx_SetColor
-	extern	_gfx_Sprite
-	extern	_gfx_SetTextConfig
+	extern	__sshl
 	extern	_gfx_SetMonospaceFont
-	extern	_gfx_PrintStringXY
-	extern	_os_GetCSC
-	extern	_os_ClrLCD
-	extern	_gfx_End
+	extern	__sand
 	extern	_os_DrawStatusBar
+	extern	__sshru
+	extern	__setflag
+	extern	__iand
+	extern	_gfx_FillRectangle
+	extern	_os_GetCSC
 	extern	_os_HomeUp
+	extern	__frameset
+	extern	_gfx_SetTextBGColor
+	extern	_kb_AnyKey
+	extern	_kb_Scan
+	extern	_gfx_GetStringWidth
+	extern	_os_ClrLCD
+	extern	_gfx_SwapDraw
 	extern	_gfx_SetDraw
+	extern	_gfx_VertLine
+	extern	__Unwind_SjLj_Unregister
+	extern	_gfx_SetColor
+	extern	_strcat
+	extern	__bshl
+	extern	_gfx_SetTextConfig
+	extern	_gfx_PrintStringXY
+	extern	_gfx_TransparentSprite
+	extern	_gfx_SetTextScale
