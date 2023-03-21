@@ -74,6 +74,7 @@ BB0_3:
 	ld	hl, 50
 	push	hl
 	push	hl
+	ld	hl, _pfp_data
 	push	hl
 	call	_gfx_Sprite
 	pop	hl

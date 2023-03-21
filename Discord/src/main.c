@@ -2,6 +2,7 @@
 #include <ti/getcsc.h>
 #include <stdlib.h>
 #include <graphx.h>
+#include <gfx/gfx.h>
 void PrintCentered(const char *str);
 
 /* Main function, called first */
@@ -35,8 +36,8 @@ int main(void)
         gfx_FillRectangle(50, i1, 2, 2);
         i1 = i1 + 1;
     }
-    gfx_sprite_t* pfp_data;
-    gfx_Sprite(pfp_data, 50, 50);
+
+    gfx_Sprite(pfp, 50, 50);
     // DRAW LINE - END
     gfx_PrintStringXY("CLIPPED TXTEEEE", 70,50);
 
