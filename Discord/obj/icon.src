@@ -1,0 +1,27 @@
+	section .icon
+
+	jp	___prgm_init
+	db	$01
+	public ___icon
+___icon:
+	db	$10, $10
+	db	$9B, $9B, $9B, $9B, $9B, $9B, $9B, $9B, $9B, $9B, $7B, $7B, $7B, $7B, $7B, $7B
+	db	$7C, $7C, $5C, $5C, $5C, $5C, $5C, $7B, $7B, $7B, $5B, $5B, $5B, $5B, $5B, $5B
+	db	$5C, $5C, $5C, $5C, $5C, $5C, $5C, $7B, $7B, $7B, $5B, $5B, $5B, $5B, $5B, $5B
+	db	$5C, $5C, $5C, $5C, $9D, $9D, $7C, $7C, $7C, $7C, $BD, $9D, $5B, $5B, $5B, $5B
+	db	$5C, $5C, $7C, $DE, $DE, $DF, $FF, $FF, $FF, $FF, $DF, $DE, $DE, $7B, $5B, $5B
+	db	$5C, $5C, $9D, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $9D, $5B, $5B
+	db	$5C, $5C, $DE, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $FF, $DF, $DE, $5B, $5B
+	db	$7B, $7C, $DF, $FF, $DF, $BD, $BD, $FF, $FF, $BD, $BD, $DF, $DF, $DF, $7B, $5B
+	db	$7B, $7C, $FF, $FF, $DE, $5B, $5B, $FE, $FE, $5B, $5B, $DE, $DF, $DF, $7C, $5B
+	db	$7B, $9D, $FF, $FF, $DF, $9C, $9C, $DF, $DF, $9C, $7C, $DF, $DF, $DF, $9D, $5B
+	db	$5B, $9D, $FF, $DF, $DE, $FF, $FF, $FF, $FF, $DF, $DF, $DE, $FE, $DF, $9D, $5B
+	db	$5B, $5C, $DE, $FF, $DE, $9D, $9D, $BD, $BD, $9D, $9C, $DE, $DF, $DE, $5B, $5B
+	db	$5B, $5B, $5B, $9C, $BD, $7B, $5B, $5B, $5B, $5B, $5B, $BD, $7C, $5B, $5B, $5B
+	db	$5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
+	db	$5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B, $5B
+	db	$7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B, $7B
+	public ___description
+___description:
+	db	"Discord", 0
+___prgm_init:

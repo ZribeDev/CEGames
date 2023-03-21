@@ -1,0 +1,146 @@
+	section	.text,"ax",@progbits
+	assume	adl = 1
+	section	.text,"ax",@progbits
+	public	_main
+_main:
+	ld	hl, -3
+	call	__frameset
+	ld	iy, -3145600
+	call	_os_ClrLCD
+	call	_os_HomeUp
+	call	_os_DrawStatusBar
+	call	_gfx_Begin
+	ld	hl, 6
+	push	hl
+	call	_gfx_SetTextFGColor
+	pop	hl
+	ld	hl, 74
+	push	hl
+	call	_gfx_SetTextBGColor
+	pop	hl
+	ld	hl, 5
+	push	hl
+	call	_gfx_SetTextTransparentColor
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_gfx_SetDraw
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_gfx_SetTextConfig
+	pop	hl
+	ld	hl, 8
+	push	hl
+	call	_gfx_SetMonospaceFont
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_gfx_SetDraw
+	pop	hl
+	ld	hl, 74
+	push	hl
+	call	_gfx_FillScreen
+	pop	hl
+	ld	hl, -108
+	push	hl
+	call	_gfx_SetColor
+	pop	hl
+	ld	de, 241
+	ld	bc, 0
+BB0_1:
+	push	bc
+	pop	hl
+	or	a, a
+	sbc	hl, de
+	jr	z, BB0_3
+	ld	hl, 2
+	push	hl
+	push	hl
+	push	bc
+	ld	hl, 50
+	push	hl
+	ld	(ix - 3), bc
+	call	_gfx_FillRectangle
+	ld	bc, (ix - 3)
+	ld	de, 241
+	pop	hl
+	pop	hl
+	pop	hl
+	pop	hl
+	inc	bc
+	jr	BB0_1
+BB0_3:
+	ld	hl, 50
+	push	hl
+	push	hl
+	push	hl
+	call	_gfx_Sprite
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 50
+	push	hl
+	ld	hl, 70
+	push	hl
+	ld	hl, _.str
+	push	hl
+	call	_gfx_PrintStringXY
+	pop	hl
+	pop	hl
+	pop	hl
+	ld	hl, 1
+	push	hl
+	call	_gfx_Blit
+	pop	hl
+BB0_4:
+	call	_os_GetCSC
+	or	a, a
+	jr	z, BB0_4
+	call	_gfx_End
+	or	a, a
+	sbc	hl, hl
+	ld	sp, ix
+	pop	ix
+	ret
+	section	.text,"ax",@progbits
+
+	section	.data,"aw",@progbits
+	public	_global_palette
+_global_palette:
+	db	"|ÿÿ¸)¸)¸)¸©¸©¸©¸­¸­¸­Ø-Ø-Ø-Ø­Ø1Ø±Ø±Ø±Ù±Ù±Ù±ø1ø1ø1ù1ù1ù1ø5øµùµùµùµ666:::ººº9:9>9¾9ÂZBZÂZÆzFzÆzÊšJšÊšÎºN»NºR»R»ÒÛVÛÖûVûZûÚ[[_ß<c<ã<ç\g\ç\ë]ë|k}k}ïoïó½s½w½÷¾÷ÞwÞ{"
+
+	section	.data,"aw",@progbits
+	public	_pfp_data
+_pfp_data:
+	db	"  (&&&&&&""""""      ", 13, 13, 13, "&&&&""""""""""       ", 13, 13, 13, "&&&""""""""""""       ", 13, 13, 13, "%""""""""""""""       ", 13, 13, 13, """""""""""""""""       ", 13, 13, 13, """"""""""""""" &4FE/ /HE3 ", 13, 13, 13, 13, """""""""""""%>RA.4BKOQQOKB11IT>", 13, 13, 13, 13, """"""""" +QJ@OVWWWWWWWWWWVK?QQ(", 13, 13, 13, 13, """    DTTWWWWWWWWWWWWWWWWSVH", 13, 13, 13, 13, 13, "    (TWWWWWWWWWWWWWWWWWWWWV%", 13, 13, 13, 13, "    ;WWWWWWWWWWWWWWWWWWWWVV>", 13, 13, 13, 13, "    NWWWWWWWWWWWWWWWWWWWWVVQ", 13, 13, 13, "   *VWWWWWWWWWWWWWWWWWWWVVVV*", 13, 13, "	   7WWWWWWVNQWWWWWWQNVWWVVVV<", 13, 13, "	   GWWWWWT+@WWWW=", 13, "	+TVVVVVL", 13, "		 QWWWWW=TWWR", 13, "@VVVVVS", 13, "	", 13, """VWWWWW6QWWO7VVVVVV ", 13, "	,WWWWWWH+VWWV(IVVVVVV,		1WWWWWWWC+1QWWWWO/*DVVVVVVV3		6WWWWVWWWWWWWWWWWVVVVVVVVVV7	8WWWWHGVWWWWWWWWVVVVVJ@VVVV;%RWWWWG+<OVWWWVVVVQ@+?VVVVR&OWWWWTD", 13, "+3994-	>SVVVVO;QWWW6", 13, 13, 13, "		", 13, 13, 13, 13, "1VVVQ9", 10, "", 13, 13, "&34", 13, "", 13, 13, 13, 13, 13, 13, 13, 13, 10, "00", 13, 13, 13, "", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "				", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "	", 13, "			", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "		", 13, "		", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "	", 13, 13, "		", 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, "		", 13, 10, 10, 10, 10, 10, 10, 10, ""
+
+	section	.rodata,"a",@progbits
+	private	_.str
+_.str:
+	db	"CLIPPED TXTEEEE", 0
+
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	ident	"clang version 15.0.0 (https://github.com/jacobly0/llvm-project 6d9aa7a16db70f3d02ae304b08d4a03011281fef)"
+	extern	_gfx_SetTextTransparentColor
+	extern	_gfx_FillScreen
+	extern	__Unwind_SjLj_Register
+	extern	_gfx_Blit
+	extern	__frameset
+	extern	__Unwind_SjLj_Unregister
+	extern	_gfx_SetTextBGColor
+	extern	_gfx_FillRectangle
+	extern	_gfx_SetTextFGColor
+	extern	_gfx_Begin
+	extern	_gfx_SetColor
+	extern	_gfx_Sprite
+	extern	_gfx_SetTextConfig
+	extern	_gfx_SetMonospaceFont
+	extern	_gfx_PrintStringXY
+	extern	_os_GetCSC
+	extern	_os_ClrLCD
+	extern	_gfx_End
+	extern	_os_DrawStatusBar
+	extern	_os_HomeUp
+	extern	_gfx_SetDraw
